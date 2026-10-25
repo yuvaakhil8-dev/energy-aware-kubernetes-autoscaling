@@ -1,272 +1,151 @@
-# Flask Application Deployment Using Docker and Kubernetes (Minikube)
+# Energy-Aware Autoscaling: Reproducible Research Build
 
-Beginner-friendly project that runs a simple Flask app locally, packages it in Docker, and deploys it to a local Kubernetes cluster (Minikube).
+This repository is a research rebuild of a Flask/Kubernetes autoscaling demonstration. It now contains a configurable discrete-time simulation, five explicitly separated scaling strategies, a node-level energy model, paired statistical analysis, a three-page dashboard, and a separate real-Minikube/HPA validation.
 
-## 1. Project Architecture
+**All simulation energy is modelled, not measured.** The real-cluster validation contains real replica counts and request outcomes, but its energy column is also modelled from measured node CPU, not from a power meter.
 
-```text
-Browser
-  |
-  |  http://<minikube-ip>:30007/  and  /info
-  v
-NodePort Service (flask-service, port 5000 -> targetPort 5000, nodePort 30007)
-  |
-  v
-Deployment (flask-app, replicas: 1)
-  |
-  v
-Pod -> Container (flask-container, image: flask-k8s-demo:latest, port 5000)
-  |
-  v
-Flask app (app.py, port 5000)
-```
+## Current evidence
 
-Flow:
+| Item | Value |
+|---|---|
+| Confirmatory run | `v3_paired_20261025T220942Z` |
+| Execution mode | `simulation` |
+| Design | 6 workloads × 10 seeds × 5 strategies = 300 runs |
+| Simulated duration | 300 s per run, 5 s control interval, 30 s warm-up excluded |
+| Run git commit | `431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea` |
+| Tracked working tree at run | clean (`git_tracked_dirty: false`) |
+| Tests | 91 passing at the documentation checkpoint; see `results/test_report.txt` |
+| Statistically planned α | 0.05, paired by seed, Holm correction |
+| Real cluster | Single-node Minikube v1.39.0 / Kubernetes v1.37.0, Docker driver |
 
-1. Flask serves two routes on port 5000 inside the container.
-2. Docker packages Python + dependencies + `app.py` into image `flask-k8s-demo:latest`.
-3. Minikube runs Kubernetes locally in a VM/container using the Docker driver.
-4. A Deployment keeps 1 Pod running from that image.
-5. A NodePort Service exposes the Pod on every cluster node at port `30007`.
+Key result in one paragraph: in this simulation, EAES has lower energy per served request than the simulated HPA formula in steady, medium, heavy, variable, and bursty workloads, and equal energy in the light workload. It also provisions fewer replica-hours. The advantage is not free: reactive EAES has SLA violations on the variable workload (mean `0.0119`) and bursty workload (mean `0.0170`) while the HPA formula has none, and the forecasting variant removes the variable-workload violations at a higher energy cost. Static replicas are the lowest or tied-lowest energy choice on steady, light, medium, and variable load because three replicas cover those traces, but static drops about 40% of heavy/bursty traffic and is not a safe general policy. See `results/RESULTS.md` and `results/EAES_DIAGNOSTIC.md`.
 
-## 2. Project Structure
+## What is deliberately not claimed
+
+- No physical power measurement. Kepler or an external meter was not available.
+- No reproduction of Li et al. (2025). The full text was paywalled; only bibliographic metadata was verified through Crossref.
+- No production multi-node cluster evaluation. Phase 7 is a single-node Minikube validation.
+- No claim that the legacy `cpu_threshold` strategy is Kubernetes HPA.
+- No use of the original 27-row dataset for inferential statistics. It contains nine deterministic cells copied three times.
+
+## Project structure
 
 ```text
 flask-kubernetes/
-├── app.py                  # Flask application (routes / and /info)
-├── requirements.txt        # Python dependencies (Flask)
-├── Dockerfile              # Instructions to build the Docker image
-├── .dockerignore           # Files excluded from the Docker build context
-├── README.md               # This documentation
-└── kubernetes/
-    ├── deployment.yaml     # Deployment: flask-app, 1 replica
-    └── service.yaml        # Service: flask-service, NodePort 30007
+├── app.py                       # Flask service, preserved APIs, three-page dashboard
+├── controller.py                # Original demo controller (preserved)
+├── eaes/                        # Simulation package
+│   ├── backend.py               # SimulatedCluster and kubectl validation backend
+│   ├── config.py                # YAML loading, hashing, provenance helpers
+│   ├── energy.py                # Node-level energy model and pod attribution
+│   ├── engine.py                # Paired experiment loop and raw tick logs
+│   ├── forecast.py              # Holt and EWMA forecasters
+│   ├── strategies.py            # Five scaling strategies
+│   └── workloads/               # Deterministic workload trace generation
+├── analysis/                    # Statistics and EAES diagnostics
+├── experiments/                 # Full run and real-cluster validation entry points
+├── configs/                     # Experiment, simulation, energy, SLA, strategy YAML
+├── traces/                      # Deterministic per-workload/per-seed traces
+├── data/                        # Byte-identical read-only copies of original datasets
+├── results/                     # Generated tables, reports, raw tick logs, cluster logs
+├── templates/research/          # Three-page dashboard
+├── static/research.css/js       # Dashboard assets
+├── docs/                        # Methodology, validation, provenance, final report
+└── kubernetes/                  # Deployment, service, HPA manifests
 ```
 
-## 3. Purpose of Every File
-
-| File | Purpose |
-|------|---------|
-| `app.py` | Defines Flask app, `/` and `/info` routes, listens on `0.0.0.0:5000`. `0.0.0.0` is required so the app is reachable from outside the container. |
-| `requirements.txt` | Pins `Flask==3.1.0` so Docker and local venv install the same version. |
-| `Dockerfile` | `FROM python:3.12-slim` base image, `WORKDIR /app`, install requirements, copy app, `EXPOSE 5000`, `CMD ["python", "app.py"]`. |
-| `.dockerignore` | Prevents venv, cache, git, editor files from being sent to Docker daemon. Keeps image small and builds fast. |
-| `kubernetes/deployment.yaml` | Desired state: 1 replica of `flask-k8s-demo:latest`, container `flask-container` on port 5000, `imagePullPolicy: IfNotPresent` so Minikube uses the locally loaded image. Labels `app: flask-app` must match selector. |
-| `kubernetes/service.yaml` | Stable network endpoint. `type: NodePort` exposes port `30007` on the Minikube node and forwards to `targetPort: 5000` on Pods selected by `app: flask-app`. |
-
-## 4. Flask Application Workflow
-
-`app.py`:
-
-```python
-from flask import Flask
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "Hello! My Flask application is running."
-
-@app.route("/info")
-def info():
-    return "This application will be deployed using Docker and Kubernetes."
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-```
-
-- `Flask(__name__)` creates the app.
-- `@app.route("/")` maps homepage.
-- `@app.route("/info")` maps info page.
-- `host="0.0.0.0"` listens on all interfaces (required in Docker/K8s).
-- `port=5000` matches Dockerfile `EXPOSE`, `containerPort`, and Service ports.
-
-## 5. Docker Concepts
-
-- **Image:** Read-only template built from Dockerfile. Here: `flask-k8s-demo:latest`.
-- **Container:** Running instance of an image. Isolated process with its own filesystem/ports.
-- **Dockerfile instructions:**
-  - `FROM` — base OS + Python.
-  - `WORKDIR` — working directory inside image.
-  - `COPY` + `RUN pip install` — add dependencies.
-  - `EXPOSE` — documentation/metadata (does not publish the port by itself).
-  - `CMD` — default command when container starts.
-- **`docker build -t flask-k8s-demo:latest .`** builds the image.
-- **`docker run -p 5000:5000 flask-k8s-demo:latest`** maps host port 5000 to container port 5000 for local testing.
-
-## 6. Kubernetes Concepts
-
-- **Pod:** Smallest unit. One or more containers with shared network. Created by the Deployment.
-- **Deployment:** Manages ReplicaSets/Pods, ensures desired replica count (here `replicas: 1`). Handles updates and restarts.
-- **Service (NodePort):** Stable virtual IP + DNS + port mapping. `port: 5000` is the Service port, `targetPort: 5000` is the Pod port, `nodePort: 30007` (range 30000-32767) is opened on the node for external access.
-- **Labels/Selectors:** `app: flask-app` links Service -> Pod and Deployment -> Pod. If they mismatch, the Service has no endpoints.
-- **imagePullPolicy: IfNotPresent:** Uses local image if present; does not try to pull from Docker Hub. Required for Minikube with `minikube image load`.
-
-## 7. Prerequisites
-
-- Windows + VS Code
-- Python installed
-- Docker Desktop installed
-- kubectl installed
-- Minikube installed
-
-No cloud account needed. Local Minikube only.
-
-## 8. Execution Commands
-
-Run all commands from the `flask-kubernetes/` folder unless stated otherwise.
-
-### Stage 1: Environment verification
+## Quick start
 
 ```powershell
-python --version
-docker --version
-docker info
-kubectl version --client
-minikube version
-minikube start --driver=docker
-kubectl get nodes
-```
-
-Expected:
-
-- Python version printed, e.g. `Python 3.12.x`.
-- Docker version + `Server: Docker Engine` info (Docker Desktop must be running).
-- kubectl client version.
-- Minikube version.
-- `minikube start` outputs `Done! kubectl is now configured...`.
-- `kubectl get nodes` shows one node `STATUS Ready`.
-
-### Stage 2: Flask execution (local, no Docker yet)
-
-```powershell
-cd flask-kubernetes
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+cd "C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes"
+python -m pip install -r requirements.txt
+$env:ENERGY_AWARE_NO_BG='1'
+python -m pytest -q
 python app.py
 ```
 
-Test in browser or new terminal:
+Open `http://127.0.0.1:5000/`. The three main pages are:
+
+- `/` — paired results
+- `/eaes-diagnostics` — decomposition, forecasting ablation, control-rule evidence
+- `/methodology` — assumptions, config values, hashes, limitations
+
+Legacy HTML URLs (`/autoscaling-comparison`, `/energy-analysis`, `/performance-analysis`, `/experiment-explorer`, `/research-methodology`) still return HTML 200 as compatibility views. Existing JSON APIs are preserved; `/api/v1/experiments` still serves the original 27 records from `data/`.
+
+## Reproduce the research
 
 ```powershell
-curl http://127.0.0.1:5000/
-curl http://127.0.0.1:5000/info
+# 1. Rebuild deterministic traces and run all 300 paired simulations.
+python -m experiments.run_v3
+
+# 2. Generate descriptive statistics, bootstrap CIs, paired tests, Friedman/Nemenyi,
+#    forecast evaluation, and low/nominal/high + PUE sensitivity tables.
+python -m analysis.analyze
+
+# 3. Recompute the EAES diagnostic directly from raw per-tick JSONL logs.
+python -m analysis.diagnose
+
+# 4. Full test suite.
+$env:ENERGY_AWARE_NO_BG='1'
+python -m pytest -q
 ```
 
-Expected:
+`reproduce.ps1` and `reproduce.sh` wrap these steps. The run is deterministic for a fixed config and seed set; the run manifests record the config hashes, trace index, Python/package versions, git commit, and whether tracked files were dirty.
 
-- `/` -> `Hello! My Flask application is running.`
-- `/info` -> `This application will be deployed using Docker and Kubernetes.`
-- Stop with `Ctrl+C`, then `deactivate`.
+## Real-cluster validation
 
-### Stage 3: Docker execution
+The separate validation used:
 
 ```powershell
-cd flask-kubernetes
-docker build -t flask-k8s-demo:latest .
-docker images | findstr flask-k8s-demo
-docker run -d --name flask-test -p 5000:5000 flask-k8s-demo:latest
-docker ps
-docker logs flask-test
-curl http://127.0.0.1:5000/
-curl http://127.0.0.1:5000/info
-docker stop flask-test
-docker rm flask-test
+minikube start --driver=docker --cpus=2 --memory=4096
+minikube addons enable metrics-server
+minikube image build -t flask-k8s-demo:latest .
+kubectl apply -f kubernetes/namespace.yaml
+kubectl apply -n energy-aware-dev -f kubernetes/deployment.yaml -f kubernetes/service.yaml
+kubectl apply -f kubernetes/hpa.yaml -n energy-aware-dev
+kubectl port-forward -n energy-aware-dev svc/energy-aware-service 5001:5000
+python -m experiments.run_cluster_validation --repetitions 3 --duration 60 --rate 80
 ```
 
-Expected:
+Results: 3 static repetitions and 3 native-HPA repetitions, all requests served at 80 req/s in the validation window, with HPA scaling from 1 replica to 4. See `results/cluster_validation/CLUSTER_VALIDATION.md` and `docs/CLUSTER_ENVIRONMENT.md`. This validation is not the paired experiment and does not validate the simulation's energy ranking.
 
-- Build ends with `Successfully tagged flask-k8s-demo:latest`.
-- Image listed.
-- Container `Up` in `docker ps`.
-- Logs show `Running on http://0.0.0.0:5000`.
-- curl returns the two strings above.
-- Container stopped/removed so port 5000 is free for later.
+## Documentation map
 
-### Stage 4: Kubernetes deployment (Minikube)
+| Document | Content |
+|---|---|
+| `AUDIT.md` | Original defects, preserved assets, dataset audit |
+| `docs/PROJECT_REVIEW_AND_PLAN.md` | Phase 0 plan and acceptance criteria |
+| `ANALYSIS_PLAN.md` | Frozen pre-registered analysis plan |
+| `docs/METHODOLOGY.md` | Research design and modelling assumptions |
+| `docs/SIMULATION_MODEL.md` | Queue, capacity, startup, latency model |
+| `docs/ENERGY_MODEL.md` | Power model, PUE, attribution, limitations |
+| `docs/STRATEGIES.md` | Exact decision rules for all five strategies |
+| `docs/EXPERIMENT_PROTOCOL.md` | Paired execution protocol and windows |
+| `docs/STATISTICAL_ANALYSIS.md` | Tests, corrections, effect sizes, software implementation |
+| `docs/RESULTS_AND_INTERPRETATION.md` | Results narrative and guardrails |
+| `docs/FAILURE_ANALYSIS.md` | Where EAES fails and why |
+| `docs/THREATS_TO_VALIDITY.md` | Construct, internal, external, conclusion threats |
+| `docs/KUBERNETES_VALIDATION.md` | Real-cluster validation record |
+| `docs/DATA_PROVENANCE.md` | Original data hashes and pseudo-replication |
+| `docs/REPRODUCIBILITY.md` | Exact commands, versions, artifact layout |
+| `docs/TESTING.md` | Test inventory and results |
+| `docs/DASHBOARD.md` | Dashboard pages, APIs, compatibility routes |
+| `docs/RELATED_WORK.md` | Verified related work and positioning |
+| `docs/RESEARCH_CONTRIBUTIONS.md` | What is new and what is not |
+| `docs/LIMITATIONS.md` | Consolidated limitations |
+| `docs/FINAL_REPORT.md` | 20-section final report |
+| `docs/CLUSTER_ENVIRONMENT.md` | Minikube/metrics-server environment |
+| `docs/DASHBOARD_AND_CONTAINER_VALIDATION.md` | Container smoke test record |
 
-```powershell
-cd flask-kubernetes
-minikube status
-kubectl get nodes
-minikube image load flask-k8s-demo:latest
-kubectl apply -f kubernetes/deployment.yaml
-kubectl apply -f kubernetes/service.yaml
-kubectl get deployments
-kubectl get pods
-kubectl get services
-kubectl logs -l app=flask-app
-minikube service flask-service --url
-```
+## Original datasets
 
-Then open the printed URL in browser, e.g. `http://127.0.0.1:<port>`, and test:
+The originals remain outside the repository and were not modified:
 
-```powershell
-# Replace URL with output of previous command
-curl <minikube-service-url>/
-curl <minikube-service-url>/info
-```
+- `experiment_results_v2.json` — SHA-256 `6279D01DC92D9C4FBE2EBB2C5BA0C12A7DA3EA7CA985E9FA762E88A11F34234E`
+- `experiment_results.json` — SHA-256 `C4BF4BFFFA8D0242395D2A2FB966C16DBC4884078BE7E82395E778EF87968451`
 
-Or directly with NodePort:
+`data/` contains byte-identical copies so the legacy API works in a fresh clone and inside the container. The 27-row v2 file is not independent evidence; see `docs/DATA_PROVENANCE.md`.
 
-```powershell
-minikube ip
-kubectl get svc flask-service
-```
+## License and attribution
 
-Expected:
-
-- `deployment.apps/flask-app created`, `service/flask-service created`.
-- Pod `STATUS Running`, `READY 1/1`.
-- Service shows `5000:30007/TCP`.
-- Logs show Flask running.
-- Browser shows both expected strings.
-
-### Stage 5: Testing checklist
-
-- [ ] Homepage returns `Hello! My Flask application is running.`
-- [ ] `/info` returns `This application will be deployed using Docker and Kubernetes.`
-- [ ] `kubectl get pods` shows 1 Running pod.
-- [ ] `kubectl get svc flask-service` shows NodePort 30007.
-- [ ] App accessed via `minikube service flask-service --url`.
-
-## 9. Troubleshooting
-
-| Symptom | Cause / Fix |
-|---------|-------------|
-| `docker info` fails / Docker daemon not running | Start Docker Desktop, wait for green status, retry. |
-| `minikube start` fails with driver error | Ensure Docker Desktop is running, run `minikube delete`, then `minikube start --driver=docker`. |
-| `kubectl get nodes` shows `NotReady` | Wait 1-2 min, run `minikube status`, `kubectl describe node minikube`. |
-| Flask `Address already in use :5000` | Old container/test still running. `docker stop flask-test; docker rm flask-test` or stop local `python app.py` with `Ctrl+C`. |
-| `ImagePullBackOff` / `ErrImagePull` | Image not in Minikube. Run `minikube image load flask-k8s-demo:latest`, keep `imagePullPolicy: IfNotPresent`, `kubectl delete pod -l app=flask-app` to recreate. |
-| Pod `CrashLoopBackOff` | App crashed. Check `kubectl logs -l app=flask-app` and `kubectl describe pod -l app=flask-app`. Usually wrong port or missing dependency. |
-| Service has no endpoints (`kubectl describe svc flask-service` shows `<none>`) | Label mismatch. Deployment Pod must have `app: flask-app` and Service selector must be `app: flask-app`. |
-| `curl` to NodePort fails | Use `minikube service flask-service --url` instead of guessing IP. Ensure Minikube tunnel/cluster is running. |
-| Windows PowerShell venv activation blocked | Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`, then re-activate. |
-
-Useful diagnostics:
-
-```powershell
-kubectl get pods
-kubectl describe deployment flask-app
-kubectl describe pod -l app=flask-app
-kubectl logs -l app=flask-app
-kubectl describe svc flask-service
-kubectl get events --sort-by=.lastTimestamp
-```
-
-## 10. Cleanup
-
-```powershell
-kubectl delete -f kubernetes/service.yaml
-kubectl delete -f kubernetes/deployment.yaml
-docker stop flask-test
-docker rm flask-test
-docker rmi flask-k8s-demo:latest
-deactivate
-minikube stop
-# To fully remove the cluster:
-# minikube delete
-```
-
-This leaves code intact but stops the cluster and removes K8s objects, test container, and image.
+The original application code is preserved from the student project baseline. The research additions are provided for academic inspection. Li et al. (2025), *Energy-aware elastic scaling algorithm for microservices in Kubernetes clouds*, DOI `10.1016/j.jnca.2025.104218`, is cited as related work only; this repository does not claim to reproduce it.

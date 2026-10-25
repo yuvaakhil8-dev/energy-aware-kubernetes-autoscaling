@@ -1,8 +1,8 @@
 {
   "alpha": 0.05,
-  "analyzed_at": "2026-10-25T21:21:02.302358+00:00",
+  "analyzed_at": "2026-10-25T22:10:27.889715+00:00",
   "bootstrap_resamples": 5000,
-  "git_commit": "e3160d970a6974aece2c4f504594ab2a84aef66b",
+  "git_commit": "431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea",
   "n_seeds": 10,
   "n_summaries": 300,
   "nominal_energy_recompute_max_rel_error": 8.060663174190911e-16,
@@ -11,8 +11,8 @@
     "Significance describes the simulation only.",
     "Energy per served request is null when no requests were served."
   ],
-  "run_dir": "results\\runs\\v3_paired_20261025T212043Z",
-  "run_id": "v3_paired_20261025T212043Z",
+  "run_dir": "results\\runs\\v3_paired_20261025T220942Z",
+  "run_id": "v3_paired_20261025T220942Z",
   "strategies": [
     "static",
     "cpu_threshold",

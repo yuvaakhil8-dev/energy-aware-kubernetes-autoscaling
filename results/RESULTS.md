@@ -1,7 +1,7 @@
 # Results (generated)
 
-Run: `v3_paired_20261025T212043Z`  
-Git commit: `e3160d970a6974aece2c4f504594ab2a84aef66b`  
+Run: `v3_paired_20261025T220942Z`  
+Git commit: `431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea`  
 Execution mode: **simulation**  
 Energy scenario: **nominal**  
 Seeds: 10 per workload; workloads: steady, light, medium, heavy, variable, bursty  

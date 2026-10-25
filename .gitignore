@@ -5,3 +5,4 @@ __pycache__/
 venv/
 archive/
 *.log
+results/cluster_validation/portforward.*

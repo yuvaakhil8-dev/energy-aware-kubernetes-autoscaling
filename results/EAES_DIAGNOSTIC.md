@@ -1,7 +1,8 @@
 # EAES Diagnostic (generated from raw tick logs)
 
-Run: `v3_paired_20261025T212043Z`  
-Git commit: `e3160d970a6974aece2c4f504594ab2a84aef66b`  
+Run: `v3_paired_20261025T220942Z`  
+Run git commit: `431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea`  
+Analysis commit: `431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea`  
 Execution mode: **simulation**  
 
 > All energy is modelled, not measured. The diagnostic looks for evidence that could favour or harm EAES and does not adjust any result.
@@ -100,7 +101,7 @@ Execution mode: **simulation**
 ## 6. Findings
 
 - steady: EAES energy per served request is lower than HPA formula (22.577 vs 30.700 J, ratio 0.735); energy per offered request ratio is 0.735; not explained by the denominator. EAES serves 0/10 seeds more requests, has 0.0000 vs 0.0000 drop rate and 0.0000 vs 0.0000 SLA violation rate, and uses 0.580x the replica-hours.
-- light: EAES energy per served request is lower than HPA formula (46.722 vs 46.722 J, ratio 1.000); energy per offered request ratio is 1.000; not explained by the denominator. EAES serves 0/10 seeds more requests, has 0.0000 vs 0.0000 drop rate and 0.0000 vs 0.0000 SLA violation rate, and uses 0.487x the replica-hours.
+- light: EAES energy per served request is equal to HPA formula (46.722 vs 46.722 J, ratio 1.000); energy per offered request ratio is 1.000; not explained by the denominator. EAES serves 0/10 seeds more requests, has 0.0000 vs 0.0000 drop rate and 0.0000 vs 0.0000 SLA violation rate, and uses 0.487x the replica-hours.
 - medium: EAES energy per served request is lower than HPA formula (20.961 vs 32.208 J, ratio 0.651); energy per offered request ratio is 0.651; not explained by the denominator. EAES serves 0/10 seeds more requests, has 0.0000 vs 0.0000 drop rate and 0.0000 vs 0.0000 SLA violation rate, and uses 0.442x the replica-hours.
 - heavy: EAES energy per served request is lower than HPA formula (18.578 vs 21.338 J, ratio 0.871); energy per offered request ratio is 0.871; not explained by the denominator. EAES serves 0/10 seeds more requests, has 0.0000 vs 0.0000 drop rate and 0.0000 vs 0.0000 SLA violation rate, and uses 0.807x the replica-hours.
 - variable: EAES energy per served request is lower than HPA formula (23.022 vs 44.547 J, ratio 0.517); energy per offered request ratio is 0.517; not explained by the denominator. EAES serves 0/10 seeds more requests, has 0.0000 vs 0.0000 drop rate and 0.0119 vs 0.0000 SLA violation rate, and uses 0.372x the replica-hours.

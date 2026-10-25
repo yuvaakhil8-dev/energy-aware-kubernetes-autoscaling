@@ -52,7 +52,8 @@ kubectl port-forward -n energy-aware-dev svc/energy-aware-service 5001:5000
 - These are real cluster observations of replicas, request outcomes, and CPU metrics.
 - Energy in the validation file is **modelled** from measured node CPU; it is not a power measurement.
 - The validation is not a paired experiment and is not used to support the simulation's statistical rankings.
-- The image used for the validation was built from the commit recorded in `results/cluster_validation/manifest.json`. Dashboard-only changes made later are tested locally; see `LIMITATIONS.md`.
+- The image used for the 60 s validation runs was built from the commit recorded in `results/cluster_validation/manifest.json` (`cce700b`).
+- After the dashboard work, the image was rebuilt from commit/content `603d1de` and smoke-tested in the same cluster: `/`, `/eaes-diagnostics`, `/methodology`, all six research APIs, `/api/v1/experiments`, and `/health` returned HTTP 200. See `docs/DASHBOARD_AND_CONTAINER_VALIDATION.md`. That smoke test verifies packaging, not a new HPA experiment.
 
 ## Limitations
 
