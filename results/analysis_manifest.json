@@ -1,0 +1,31 @@
+{
+  "alpha": 0.05,
+  "analyzed_at": "2026-10-25T21:21:02.302358+00:00",
+  "bootstrap_resamples": 5000,
+  "git_commit": "e3160d970a6974aece2c4f504594ab2a84aef66b",
+  "n_seeds": 10,
+  "n_summaries": 300,
+  "nominal_energy_recompute_max_rel_error": 8.060663174190911e-16,
+  "notes": [
+    "All energy is modelled, not measured.",
+    "Significance describes the simulation only.",
+    "Energy per served request is null when no requests were served."
+  ],
+  "run_dir": "results\\runs\\v3_paired_20261025T212043Z",
+  "run_id": "v3_paired_20261025T212043Z",
+  "strategies": [
+    "static",
+    "cpu_threshold",
+    "hpa_formula",
+    "eaes",
+    "forecasting_eaes"
+  ],
+  "workloads": [
+    "steady",
+    "light",
+    "medium",
+    "heavy",
+    "variable",
+    "bursty"
+  ]
+}
