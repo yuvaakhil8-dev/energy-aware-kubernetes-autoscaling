@@ -1,0 +1,23 @@
+{% extends "research/base.html" %}
+{% block title %}{{ title }} · Legacy view{% endblock %}
+{% block heading %}{{ title }}{% endblock %}
+{% block subheading %}Preserved compatibility route{% endblock %}
+
+{% block content %}
+<section class="callout warning">
+  <strong>This legacy route is preserved for compatibility.</strong>
+  <p>The research dashboard now has three main pages: Results, EAES Diagnostics, and Methodology.
+  This URL still returns HTML 200, but its old standalone view has been replaced.</p>
+</section>
+
+<section class="panel">
+  <h2>{{ title }}</h2>
+  <p>Open the current view:</p>
+  <div class="button-row">
+    <a class="btn" href="{{ target }}">{{ target_label }}</a>
+    <a class="btn ghost" href="/eaes-diagnostics">EAES Diagnostics</a>
+    <a class="btn ghost" href="/methodology">Methodology</a>
+  </div>
+  <p class="small">Existing JSON APIs, including <code>/api/v1/experiments</code> and the service health endpoints, remain available.</p>
+</section>
+{% endblock %}

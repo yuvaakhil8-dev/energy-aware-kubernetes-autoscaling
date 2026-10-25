@@ -10,3 +10,14 @@ venv/
 .vscode/
 .kubernetes/
 *.md
+tests/
+experiments/
+analysis/
+archive/
+docs/
+results/runs/**/*.jsonl
+results/cluster_validation/*_requests.jsonl
+results/*.log
+results/*.txt
+results/*.pid
+__pycache__/**

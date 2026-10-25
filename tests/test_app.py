@@ -1,8 +1,12 @@
 """HTTP contract tests for every Flask route."""
+import hashlib
 import json
+import os
 
 DASHBOARD_ROUTES = [
     '/',
+    '/eaes-diagnostics',
+    '/methodology',
     '/autoscaling-comparison',
     '/energy-analysis',
     '/performance-analysis',
@@ -20,6 +24,12 @@ JSON_ROUTES = [
     '/controller/status',
     '/api/v1/experiments',
     '/api/v1/research-papers',
+    '/api/v1/research/results',
+    '/api/v1/research/diagnostic',
+    '/api/v1/research/methodology',
+    '/api/v1/research/cluster',
+    '/api/v1/research/tables/descriptive',
+    '/api/v1/research/tables/paired',
 ]
 
 
@@ -88,10 +98,72 @@ def test_metrics_text(client):
 
 
 def test_static_assets(client):
-    for asset in ('/static/dashboard.css', '/static/dashboard.js'):
+    for asset in ('/static/dashboard.css', '/static/dashboard.js',
+                  '/static/research.css', '/static/research.js'):
         response = client.get(asset)
         assert response.status_code == 200, asset
         assert len(response.get_data()) > 0
+
+
+def test_research_results_payload_is_generated(client):
+    payload = client.get('/api/v1/research/results').get_json()
+    assert payload['available'] is True
+    assert payload['run']['run_id']
+    assert payload['run']['execution_mode'] == 'simulation'
+    assert payload['kpis']['runs'] == 300
+    assert payload['kpis']['seeds'] == 10
+    assert payload['descriptive_primary']
+    assert payload['warnings']
+
+
+def test_research_diagnostic_payload(client):
+    payload = client.get('/api/v1/research/diagnostic').get_json()
+    assert payload['available'] is True
+    assert payload['comparisons']
+    assert payload['forecast_comparison']
+    assert payload['conservation_max_error_j'] is not None
+
+
+def test_research_methodology_payload(client):
+    payload = client.get('/api/v1/research/methodology').get_json()
+    assert payload['configs']['sla']['latency_sla_ms'] == 500.0
+    assert payload['configs']['simulation']['pods_per_node'] == 4
+    assert payload['dataset_hashes']['experiment_results_v2.json']
+    assert 'hpa_formula' in payload['strategy_distinctions']
+
+
+def test_research_table_whitelist(client):
+    ok = client.get('/api/v1/research/tables/descriptive')
+    assert ok.status_code == 200
+    assert ok.get_json()['rows']
+    bad = client.get('/api/v1/research/tables/not-a-table')
+    assert bad.status_code == 404
+
+
+def test_cluster_validation_is_labelled(client):
+    payload = client.get('/api/v1/research/cluster').get_json()
+    assert payload['execution_mode'] == 'kubernetes_validation'
+    assert payload['available'] is True
+    assert 'not measured power' in payload['energy_note']
+
+
+def test_app_local_dataset_copies_are_byte_identical(app_module):
+    expected = {
+        'experiment_results_v2.json': '6279D01DC92D9C4FBE2EBB2C5BA0C12A7DA3EA7CA985E9FA762E88A11F34234E',
+        'experiment_results.json': 'C4BF4BFFFA8D0242395D2A2FB966C16DBC4884078BE7E82395E778EF87968451',
+    }
+    for name, digest in expected.items():
+        path = os.path.join(app_module.BASE_DIR, 'data', name)
+        with open(path, 'rb') as fh:
+            assert hashlib.sha256(fh.read()).hexdigest().upper() == digest
+
+
+def test_loader_uses_app_local_copies(monkeypatch, app_module):
+    monkeypatch.setattr(app_module, 'PROJECT_ROOT', app_module.BASE_DIR)
+    app_module._load_experiment_data()
+    assert len(app_module.EXPERIMENT_RESULTS) == 27
+    assert app_module.DATASET_FILE == 'experiment_results_v2.json'
+    assert app_module.DATASET_IS_FALLBACK is False
 
 
 def test_unknown_route_returns_404_html(client):

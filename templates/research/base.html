@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Energy-Aware Autoscaling Research{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='research.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <span class="brand-mark">EA</span>
+        <div>
+          <div class="brand-title">Energy-Aware</div>
+          <div class="brand-sub">Autoscaling Research</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="nav-link {% if active == 'results' %}active{% endif %}" href="/">Results</a>
+        <a class="nav-link {% if active == 'diagnostics' %}active{% endif %}" href="/eaes-diagnostics">EAES Diagnostics</a>
+        <a class="nav-link {% if active == 'methodology' %}active{% endif %}" href="/methodology">Methodology</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="pill">Simulation · modelled energy</div>
+        <p>Energy is estimated from CPU utilisation and node power assumptions. It is not a hardware measurement.</p>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="Toggle navigation">☰</button>
+        <div>
+          <h1 class="page-title">{% block heading %}Research dashboard{% endblock %}</h1>
+          <p class="page-sub">{% block subheading %}Paired simulation, statistics, and separate cluster validation{% endblock %}</p>
+        </div>
+        <div class="topbar-meta"><span class="dot"></span><span>Reproducible research build</span></div>
+      </header>
+
+      <main class="content">
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="footer">
+        Energy-aware autoscaling research dashboard ·
+        Dataset: <strong>{{ summary.file if summary is defined and summary else 'unavailable' }}</strong>
+        · All energy values are modelled, not measured.
+      </footer>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='research.js') }}" defer></script>
+</body>
+</html>

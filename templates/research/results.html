@@ -1,0 +1,143 @@
+{% extends "research/base.html" %}
+{% block title %}Results · Energy-Aware Autoscaling{% endblock %}
+{% block heading %}Research dashboard: paired results{% endblock %}
+{% block subheading %}Six workloads × ten seeds × five strategies · simulation, not a power measurement{% endblock %}
+
+{% block content %}
+{% if not data.available %}
+  <section class="callout danger">
+    <strong>No generated research run is available.</strong>
+    <p>{{ data.error }} Run <code>python -m experiments.run_v3</code> and <code>python -m analysis.analyze</code>, then reload.</p>
+  </section>
+{% else %}
+  <section class="callout info">
+    <strong>Execution mode: {{ data.run.execution_mode }}</strong>
+    Run <code>{{ data.run.run_id }}</code> · {{ data.kpis.runs }} runs · {{ data.kpis.seeds }} seeds per workload ·
+    energy scenario <code>{{ data.run.energy_scenario }}</code>.
+    All energy values are <em>modelled</em>, not measured. The separate Minikube validation is shown below.
+  </section>
+
+  <section class="kpi-grid">
+    <div class="kpi"><span class="kpi-label">Paired runs</span><span class="kpi-value">{{ data.kpis.runs }}</span><span class="kpi-note">{{ data.kpis.workloads }} workloads × {{ data.kpis.strategies }} strategies</span></div>
+    <div class="kpi"><span class="kpi-label">EAES / HPA energy per served</span><span class="kpi-value">{% if data.kpis.energy_ratio_vs_hpa is not none %}{{ "%.2f"|format(data.kpis.energy_ratio_vs_hpa) }}×{% else %}n/a{% endif %}</span><span class="kpi-note">mean across workloads; lower is better</span></div>
+    <div class="kpi"><span class="kpi-label">EAES replica-hours / HPA</span><span class="kpi-value">{% if data.kpis.replica_ratio_vs_hpa is not none %}{{ "%.2f"|format(data.kpis.replica_ratio_vs_hpa) }}×{% else %}n/a{% endif %}</span><span class="kpi-note">provisioning cost</span></div>
+    <div class="kpi"><span class="kpi-label">EAES SLA / HPA SLA</span><span class="kpi-value">{% if data.kpis.eaes_sla_violation_rate is not none and data.kpis.hpa_sla_violation_rate is not none %}{{ "%.1f"|format(data.kpis.eaes_sla_violation_rate * 100) }}% / {{ "%.1f"|format(data.kpis.hpa_sla_violation_rate * 100) }}%{% else %}n/a{% endif %}</span><span class="kpi-note">dropped + over-500 ms requests</span></div>
+    <div class="kpi"><span class="kpi-label">Static drop rate</span><span class="kpi-value">{% if data.kpis.static_drop_rate is not none %}{{ "%.1f"|format(data.kpis.static_drop_rate * 100) }}%{% else %}n/a{% endif %}</span><span class="kpi-note">low energy often means unmet demand</span></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Primary metric by workload</h2>
+        <p>Hover/select a metric. Values are means over ten seeds; confidence intervals are in the table below.</p>
+      </div>
+      <label class="select-label">Metric
+        <select id="metricSelect">
+          <option value="energy_per_served_request_j">Energy / served request (J)</option>
+          <option value="replica_hours">Replica-hours</option>
+          <option value="sla_violation_rate">SLA violation rate</option>
+          <option value="drop_rate">Drop rate</option>
+        </select>
+      </label>
+    </div>
+    <div class="chart-wrap"><canvas id="resultChart" height="120"></canvas></div>
+    <p class="chart-note">If the chart library is unavailable, the tables remain authoritative.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><h2>Descriptive statistics: primary metrics</h2><p>Mean [95% bootstrap CI] and median from the generated <code>descriptive.csv</code>.</p></div>
+      <a class="link-btn" href="/api/v1/research/tables/descriptive">JSON table</a>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Workload</th><th>Strategy</th><th>Metric</th><th>n</th><th>Mean [95% CI]</th><th>Median</th></tr></thead>
+        <tbody>
+        {% for row in data.descriptive_primary %}
+          <tr>
+            <td>{{ row.workload }}</td>
+            <td><span class="tag">{{ row.strategy }}</span></td>
+            <td>{{ row.metric }}</td>
+            <td>{{ row.n }}</td>
+            <td>{% if row.mean is not none %}{{ "%.4f"|format(row.mean) }} [{{ "%.4f"|format(row.ci_low) }}, {{ "%.4f"|format(row.ci_high) }}]{% else %}n/a{% endif %}</td>
+            <td>{% if row.median is not none %}{{ "%.4f"|format(row.median) }}{% else %}n/a{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><h2>Paired tests: EAES and forecasting EAES vs HPA formula</h2><p>Differences are strategy minus baseline; negative favours the strategy for all listed metrics. Holm-adjusted p-values are shown.</p></div>
+      <a class="link-btn" href="/api/v1/research/tables/paired">JSON table</a>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Workload</th><th>Strategy</th><th>Metric</th><th>Mean diff [95% CI]</th><th>p</th><th>Holm p</th><th>Cliff's d</th></tr></thead>
+        <tbody>
+        {% for row in data.paired_primary %}
+          {% if row.baseline == 'hpa_formula' and row.strategy in ('eaes', 'forecasting_eaes') %}
+          <tr>
+            <td>{{ row.workload }}</td>
+            <td><span class="tag">{{ row.strategy }}</span></td>
+            <td>{{ row.metric }}</td>
+            <td>{% if row.mean_diff is not none %}{{ "%.4f"|format(row.mean_diff) }} [{{ "%.4f"|format(row.ci_low) }}, {{ "%.4f"|format(row.ci_high) }}]{% else %}n/a{% endif %}</td>
+            <td>{{ "%.4f"|format(row.p_value) if row.p_value is not none else 'not testable' }}</td>
+            <td>{{ "%.4f"|format(row.p_holm) if row.p_holm is not none else 'n/a' }}</td>
+            <td>{% if row.cliffs_delta is not none %}{{ "%.2f"|format(row.cliffs_delta) }}{% else %}n/a{% endif %}</td>
+          </tr>
+          {% endif %}
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><h2>Separate real-cluster validation</h2><p>Real Minikube/HPA observations. Energy here is modelled from measured node CPU, not measured power.</p></div>
+      <a class="link-btn" href="/api/v1/research/cluster">JSON</a>
+    </div>
+    {% if data.cluster.available %}
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Mode</th><th>Reps</th><th>Served</th><th>Offered</th><th>Drop</th><th>p95 ms</th><th>Avg replicas</th><th>Max replicas</th><th>Modelled J/req</th></tr></thead>
+        <tbody>
+        {% for row in data.cluster.aggregate %}
+          <tr>
+            <td>{{ row.mode }}</td><td>{{ row.replications }}</td>
+            <td>{{ "%.0f"|format(row.served_requests) }}</td><td>{{ "%.0f"|format(row.offered_requests) }}</td>
+            <td>{{ "%.4f"|format(row.drop_rate) }}</td><td>{{ "%.1f"|format(row.p95_latency_ms) }}</td>
+            <td>{{ "%.2f"|format(row.avg_ready_replicas) }}</td><td>{{ "%.0f"|format(row.max_ready_replicas) }}</td>
+            <td>{% if row.modelled_energy_per_served_request_j is not none %}{{ "%.2f"|format(row.modelled_energy_per_served_request_j) }}{% else %}n/a{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="small">Cluster: {{ data.cluster.manifest.namespace if data.cluster.manifest else 'n/a' }} / {{ data.cluster.manifest.deployment if data.cluster.manifest else 'n/a' }} · {{ data.cluster.manifest.target_rate_rps if data.cluster.manifest else 'n/a' }} req/s · {{ data.cluster.manifest.duration_s if data.cluster.manifest else 'n/a' }} s per repetition.</p>
+    {% else %}
+      <p>No cluster validation artifacts found.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Pre-specified findings</h2>
+    <ul class="findings">
+      {% for finding in data.diagnostic_findings %}<li>{{ finding }}</li>{% endfor %}
+    </ul>
+    <div class="button-row">
+      <a class="btn" href="/eaes-diagnostics">Open EAES diagnostics</a>
+      <a class="btn ghost" href="/methodology">Read methodology</a>
+      <a class="btn ghost" href="/api/v1/research/results">Download results JSON</a>
+    </div>
+  </section>
+
+  <section class="callout warning">
+    <strong>Interpretation guardrail.</strong>
+    Statistical significance describes this simulation only. Static replicas can have low energy per served request while dropping a large share of traffic; read drop and SLA columns together. The HPA-formula baseline is a simulated replica formula, not the Kubernetes HPA controller.
+  </section>
+{% endif %}
+{% endblock %}

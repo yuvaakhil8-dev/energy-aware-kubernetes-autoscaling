@@ -20,11 +20,18 @@ from flask import Flask, jsonify, request, render_template
 import time
 import random
 from datetime import datetime
+import csv
+import hashlib
 import json
 from collections import Counter, defaultdict
 import os
 import sys
 import threading
+
+try:
+    import yaml
+except ImportError:  # pragma: no cover - requirements include PyYAML
+    yaml = None
 
 # ---------------------------------------------------------------------------
 # Paths / imports
@@ -36,6 +43,28 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
+RESULTS_DIR = os.path.join(BASE_DIR, 'results')
+CONFIG_DIR = os.path.join(BASE_DIR, 'configs')
+
+RESEARCH_STRATEGIES = ['static', 'cpu_threshold', 'hpa_formula', 'eaes', 'forecasting_eaes']
+RESEARCH_STRATEGY_LABELS = {
+    'static': 'Static',
+    'cpu_threshold': 'CPU threshold',
+    'hpa_formula': 'HPA formula',
+    'eaes': 'EAES',
+    'forecasting_eaes': 'Forecasting EAES',
+}
+RESEARCH_METRIC_LABELS = {
+    'energy_per_served_request_j': 'Energy / served request (J)',
+    'sla_violation_rate': 'SLA violation rate',
+    'replica_hours': 'Replica-hours',
+    'drop_rate': 'Drop rate',
+    'energy_per_offered_request_j': 'Energy / offered request (J)',
+    'p95_latency_ms': 'P95 latency (ms)',
+}
+PRIMARY_RESEARCH_METRICS = [
+    'energy_per_served_request_j', 'sla_violation_rate', 'replica_hours', 'drop_rate'
+]
 
 app = Flask(__name__)
 
@@ -91,21 +120,33 @@ def _load_experiment_data():
     """Load the newest validated dataset, falling back to the legacy one."""
     global EXPERIMENT_RESULTS, EXPERIMENT_LOG, DATASET_FILE, DATASET_IS_FALLBACK
 
-    v2_path = os.path.join(PROJECT_ROOT, 'experiment_results_v2.json')
-    legacy_path = os.path.join(PROJECT_ROOT, 'experiment_results.json')
-
-    data = _load_json(v2_path)
-    if isinstance(data, list) and data:
-        EXPERIMENT_RESULTS = data
-        DATASET_FILE = os.path.basename(v2_path)
-        DATASET_IS_FALLBACK = False
+    # The originals live one directory above the app.  ``data/`` contains
+    # byte-identical read-only copies so the Docker image and a fresh clone keep
+    # the legacy endpoints working without reaching outside the build context.
+    data_dirs = [PROJECT_ROOT, os.path.join(BASE_DIR, 'data')]
+    for directory in data_dirs:
+        v2_path = os.path.join(directory, 'experiment_results_v2.json')
+        data = _load_json(v2_path)
+        if isinstance(data, list) and data:
+            EXPERIMENT_RESULTS = data
+            DATASET_FILE = os.path.basename(v2_path)
+            DATASET_IS_FALLBACK = False
+            break
     else:
-        data = _load_json(legacy_path)
-        EXPERIMENT_RESULTS = data if isinstance(data, list) else []
-        DATASET_FILE = os.path.basename(legacy_path) if EXPERIMENT_RESULTS else None
-        DATASET_IS_FALLBACK = bool(EXPERIMENT_RESULTS)
+        for directory in data_dirs:
+            legacy_path = os.path.join(directory, 'experiment_results.json')
+            data = _load_json(legacy_path)
+            if isinstance(data, list) and data:
+                EXPERIMENT_RESULTS = data
+                DATASET_FILE = os.path.basename(legacy_path)
+                DATASET_IS_FALLBACK = True
+                break
 
-    log = _load_json(os.path.join(PROJECT_ROOT, 'experiment_execution_log.json'))
+    log = None
+    for directory in data_dirs:
+        log = _load_json(os.path.join(directory, 'experiment_execution_log.json'))
+        if log is not None:
+            break
     EXPERIMENT_LOG = log if isinstance(log, list) else []
 
 
@@ -273,127 +314,413 @@ def chart_payload(matrix):
 
 
 # ---------------------------------------------------------------------------
-# Dashboard routes
+# Research data layer (generated files, read-only)
+# ---------------------------------------------------------------------------
+def _read_json_file(path, default=None):
+    try:
+        with open(path, 'r', encoding='utf-8') as fh:
+            return json.load(fh)
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return default
+
+
+def _read_csv_file(path, default=None):
+    try:
+        with open(path, 'r', encoding='utf-8', newline='') as fh:
+            return list(csv.DictReader(fh))
+    except (FileNotFoundError, OSError, csv.Error):
+        return default if default is not None else []
+
+
+def _as_float(value):
+    if value is None or value == '' or value == 'null':
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_int(value):
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _research_run_dir():
+    pointer = _read_json_file(os.path.join(RESULTS_DIR, 'latest_run.json'), {}) or {}
+    rel = pointer.get('run_dir')
+    if rel:
+        candidate = rel if os.path.isabs(rel) else os.path.join(BASE_DIR, rel)
+        if os.path.exists(os.path.join(candidate, 'manifest.json')):
+            return candidate
+    runs_root = os.path.join(RESULTS_DIR, 'runs')
+    try:
+        candidates = sorted(
+            (os.path.join(runs_root, name) for name in os.listdir(runs_root)),
+            key=lambda p: os.path.getmtime(p),
+        )
+    except OSError:
+        candidates = []
+    for candidate in reversed(candidates):
+        if os.path.exists(os.path.join(candidate, 'manifest.json')):
+            return candidate
+    return None
+
+
+def _normalise_row(row, numeric_fields):
+    out = dict(row)
+    for field in numeric_fields:
+        if field in out:
+            if field in {'n', 'n_pairs', 'n_blocks', 'n_seeds', 'ticks'}:
+                out[field] = _as_int(out[field])
+            else:
+                out[field] = _as_float(out[field])
+    return out
+
+
+def _load_research_bundle():
+    run_dir = _research_run_dir()
+    bundle = {
+        'run_dir': run_dir,
+        'manifest': None,
+        'summaries': [],
+        'tables': {},
+        'diagnostic': None,
+        'cluster_rows': [],
+        'cluster_manifest': None,
+        'available': False,
+        'error': None,
+    }
+    if not run_dir:
+        bundle['error'] = 'No generated run found. Run python -m experiments.run_v3.'
+        return bundle
+    bundle['manifest'] = _read_json_file(os.path.join(run_dir, 'manifest.json'))
+    bundle['summaries'] = _read_json_file(os.path.join(run_dir, 'summary.json'), []) or []
+    numeric = {
+        'energy_per_served_request_j', 'sla_violation_rate', 'replica_hours',
+        'drop_rate', 'energy_per_offered_request_j', 'p95_latency_ms',
+        'scaling_events', 'oscillations', 'mean', 'median', 'sd', 'ci_low',
+        'ci_high', 'mean_diff', 'median_diff', 'p_value', 'p_holm',
+        'cliffs_delta', 'Q',
+    }
+    for name in ('descriptive', 'paired', 'friedman', 'nemenyi', 'forecasting', 'sensitivity'):
+        rows = _read_csv_file(os.path.join(RESULTS_DIR, 'tables', f'{name}.csv'))
+        bundle['tables'][name] = [_normalise_row(row, numeric) for row in rows]
+    bundle['diagnostic'] = _read_json_file(os.path.join(RESULTS_DIR, 'diagnostic.json'))
+    cluster_dir = os.path.join(RESULTS_DIR, 'cluster_validation')
+    cluster_rows = _read_csv_file(os.path.join(cluster_dir, 'summary.csv'))
+    cluster_numeric = {
+        'repetition', 'seed', 'offered_requests', 'served_requests',
+        'failed_requests', 'drop_rate', 'throughput_rps', 'avg_latency_ms',
+        'p95_latency_ms', 'p99_latency_ms', 'avg_ready_replicas',
+        'max_ready_replicas', 'avg_node_cpu_percent', 'max_node_cpu_percent',
+        'modelled_energy_j', 'modelled_energy_per_served_request_j',
+    }
+    bundle['cluster_rows'] = [_normalise_row(row, cluster_numeric) for row in cluster_rows]
+    bundle['cluster_manifest'] = _read_json_file(os.path.join(cluster_dir, 'manifest.json'))
+    bundle['available'] = bool(bundle['manifest'] and bundle['summaries'])
+    return bundle
+
+
+def _table_lookup(rows, metric, workload, strategy):
+    for row in rows:
+        if row.get('metric') == metric and row.get('workload') == workload and row.get('strategy') == strategy:
+            return row
+    return None
+
+
+def _cluster_aggregate(rows):
+    aggregated = []
+    for mode in ('static', 'hpa'):
+        subset = [r for r in rows if r.get('mode') == mode]
+        if not subset:
+            continue
+        def mean(field):
+            vals = [r[field] for r in subset if isinstance(r.get(field), (int, float))]
+            return sum(vals) / len(vals) if vals else None
+        aggregated.append({
+            'mode': mode,
+            'replications': len(subset),
+            'served_requests': mean('served_requests'),
+            'offered_requests': mean('offered_requests'),
+            'drop_rate': mean('drop_rate'),
+            'throughput_rps': mean('throughput_rps'),
+            'p95_latency_ms': mean('p95_latency_ms'),
+            'avg_ready_replicas': mean('avg_ready_replicas'),
+            'max_ready_replicas': max(
+                [r['max_ready_replicas'] for r in subset if isinstance(r.get('max_ready_replicas'), (int, float))],
+                default=None,
+            ),
+            'avg_node_cpu_percent': mean('avg_node_cpu_percent'),
+            'modelled_energy_per_served_request_j': mean('modelled_energy_per_served_request_j'),
+        })
+    return aggregated
+
+
+def _primary_descriptive(bundle):
+    rows = bundle['tables'].get('descriptive', [])
+    return [
+        row for row in rows
+        if row.get('metric') in PRIMARY_RESEARCH_METRICS
+        and row.get('strategy') in RESEARCH_STRATEGIES
+    ]
+
+
+def _research_kpis(bundle):
+    desc = bundle['tables'].get('descriptive', [])
+    if not desc:
+        return {}
+    def mean_for(strategy, metric):
+        values = [
+            r['mean'] for r in desc
+            if r.get('strategy') == strategy and r.get('metric') == metric
+            and isinstance(r.get('mean'), (int, float))
+        ]
+        return sum(values) / len(values) if values else None
+    eaes_energy = mean_for('eaes', 'energy_per_served_request_j')
+    hpa_energy = mean_for('hpa_formula', 'energy_per_served_request_j')
+    static_drop = mean_for('static', 'drop_rate')
+    eaes_sla = mean_for('eaes', 'sla_violation_rate')
+    hpa_sla = mean_for('hpa_formula', 'sla_violation_rate')
+    eaes_rh = mean_for('eaes', 'replica_hours')
+    hpa_rh = mean_for('hpa_formula', 'replica_hours')
+    return {
+        'runs': len(bundle['summaries']),
+        'seeds': len(bundle['manifest'].get('seeds', [])) if bundle['manifest'] else 0,
+        'workloads': len(bundle['manifest'].get('workloads', [])) if bundle['manifest'] else 0,
+        'strategies': len(bundle['manifest'].get('strategies', [])) if bundle['manifest'] else 0,
+        'eaes_energy_per_served_j': eaes_energy,
+        'hpa_energy_per_served_j': hpa_energy,
+        'energy_ratio_vs_hpa': (eaes_energy / hpa_energy) if eaes_energy and hpa_energy else None,
+        'eaes_sla_violation_rate': eaes_sla,
+        'hpa_sla_violation_rate': hpa_sla,
+        'static_drop_rate': static_drop,
+        'eaes_replica_hours': eaes_rh,
+        'hpa_replica_hours': hpa_rh,
+        'replica_ratio_vs_hpa': (eaes_rh / hpa_rh) if eaes_rh and hpa_rh else None,
+    }
+
+
+def _research_chart_data(bundle):
+    desc = bundle['tables'].get('descriptive', [])
+    workloads = bundle['manifest'].get('workloads', []) if bundle['manifest'] else []
+    strategies = bundle['manifest'].get('strategies', RESEARCH_STRATEGIES) if bundle['manifest'] else RESEARCH_STRATEGIES
+    metrics = {}
+    for metric in ('energy_per_served_request_j', 'sla_violation_rate', 'replica_hours', 'drop_rate'):
+        metrics[metric] = {
+            workload: [
+                (_table_lookup(desc, metric, workload, strategy) or {}).get('mean')
+                for strategy in strategies
+            ]
+            for workload in workloads
+        }
+    return {
+        'labels': workloads,
+        'strategies': strategies,
+        'strategy_labels': [RESEARCH_STRATEGY_LABELS.get(s, s) for s in strategies],
+        'metrics': metrics,
+        'metric_labels': RESEARCH_METRIC_LABELS,
+    }
+
+
+def research_results_payload():
+    bundle = _load_research_bundle()
+    payload = {
+        'available': bundle['available'],
+        'error': bundle['error'],
+        'run': {
+            'run_id': (bundle['manifest'] or {}).get('run_id'),
+            'git_commit': (bundle['manifest'] or {}).get('git_commit'),
+            'execution_mode': (bundle['manifest'] or {}).get('execution_mode'),
+            'energy_scenario': (bundle['manifest'] or {}).get('energy_scenario'),
+            'config_hash': (bundle['manifest'] or {}).get('config_hash'),
+            'seeds': (bundle['manifest'] or {}).get('seeds', []),
+            'workloads': (bundle['manifest'] or {}).get('workloads', []),
+            'strategies': (bundle['manifest'] or {}).get('strategies', []),
+            'n_runs': (bundle['manifest'] or {}).get('n_runs'),
+            'started_at': (bundle['manifest'] or {}).get('started_at'),
+            'ended_at': (bundle['manifest'] or {}).get('ended_at'),
+        },
+        'kpis': _research_kpis(bundle),
+        'descriptive_primary': _primary_descriptive(bundle),
+        'chart': _research_chart_data(bundle),
+        'paired_primary': [
+            row for row in bundle['tables'].get('paired', [])
+            if row.get('metric') in PRIMARY_RESEARCH_METRICS
+        ],
+        'friedman_primary': [
+            row for row in bundle['tables'].get('friedman', [])
+            if row.get('metric') in PRIMARY_RESEARCH_METRICS
+        ],
+        'cluster': {
+            'available': bool(bundle['cluster_rows']),
+            'aggregate': _cluster_aggregate(bundle['cluster_rows']),
+            'rows': bundle['cluster_rows'],
+            'manifest': bundle['cluster_manifest'],
+        },
+        'diagnostic_findings': (bundle['diagnostic'] or {}).get('findings', []),
+        'warnings': [
+            'All energy is modelled, not measured.',
+            'Static replicas can show low energy per served request while dropping traffic; read drop/SLA columns together.',
+            'The HPA-formula baseline is a simulation of the replica formula, not the Kubernetes HPA controller.',
+            'The real-cluster validation is separate from the paired simulation.',
+        ],
+    }
+    return payload
+
+
+def research_diagnostic_payload():
+    bundle = _load_research_bundle()
+    diagnostic = bundle['diagnostic'] or {}
+    return {
+        'available': bool(diagnostic),
+        'run': (bundle['manifest'] or {}).get('run_id'),
+        'git_commit': (bundle['manifest'] or {}).get('git_commit'),
+        'execution_mode': (bundle['manifest'] or {}).get('execution_mode'),
+        'comparisons': diagnostic.get('comparisons', []),
+        'forecast_comparison': diagnostic.get('forecast_comparison', []),
+        'rule_rows': diagnostic.get('rule_rows', []),
+        'findings': diagnostic.get('findings', []),
+        'conservation_max_error_j': diagnostic.get('nominal_conservation_max_error_j'),
+        'cluster': {
+            'aggregate': _cluster_aggregate(bundle['cluster_rows']),
+            'manifest': bundle['cluster_manifest'],
+        },
+        'forecasting_eval': bundle['tables'].get('forecasting', []),
+        'limitations': [
+            'Energy is modelled, never measured.',
+            'EAES is EAES-inspired, not a reproduction of Li et al. (2025).',
+            'Simulation findings do not establish production behaviour.',
+        ],
+    }
+
+
+def research_methodology_payload():
+    configs = {}
+    for name in ('experiment', 'simulation', 'energy', 'sla', 'strategies'):
+        path = os.path.join(CONFIG_DIR, f'{name}.yaml')
+        try:
+            with open(path, 'r', encoding='utf-8') as fh:
+                configs[name] = yaml.safe_load(fh) if yaml else {}
+        except (FileNotFoundError, OSError):
+            configs[name] = {}
+    manifest = _load_research_bundle()['manifest'] or {}
+    dataset_hashes = {
+        'experiment_results_v2.json': '6279D01DC92D9C4FBE2EBB2C5BA0C12A7DA3EA7CA985E9FA762E88A11F34234E',
+        'experiment_results.json': 'C4BF4BFFFA8D0242395D2A2FB966C16DBC4884078BE7E82395E778EF87968451',
+    }
+    return {
+        'configs': configs,
+        'config_hashes': manifest.get('config_hashes', {}),
+        'combined_config_hash': manifest.get('config_hash'),
+        'run_id': manifest.get('run_id'),
+        'git_commit': manifest.get('git_commit'),
+        'execution_mode': manifest.get('execution_mode'),
+        'dataset_hashes': dataset_hashes,
+        'strategy_distinctions': {
+            'static': 'Fixed replicas; no feedback.',
+            'cpu_threshold': 'Legacy 80/30 threshold with 5% hysteresis and cooldowns; not HPA.',
+            'hpa_formula': 'Simulated Kubernetes HPA replica formula; not the cluster HPA controller.',
+            'eaes': 'SLA-first lexicographic controller with a utilization margin, cooldown, and stabilization.',
+            'forecasting_eaes': 'EAES with a Holt forecast over the startup horizon.',
+        },
+        'statistics': [
+            'Paired by workload and seed.',
+            '5,000-resample bootstrap 95% CIs.',
+            'Wilcoxon signed-rank with Holm correction.',
+            'Friedman test and Nemenyi critical difference.',
+            "Cliff's delta effect size.",
+        ],
+        'limitations': [
+            'Single-node simulation assumptions; no measured power.',
+            'Kubernetes validation is a separate single-node Minikube run.',
+            'No reproduction of Li et al. (2025); full text was unavailable.',
+            'The original 27-row dataset is pseudo-replicated and is not used for inference.',
+        ],
+        'reproduce_commands': [
+            'python -m experiments.run_v3',
+            'python -m analysis.analyze',
+            'python -m analysis.diagnose',
+            'python -m pytest -q',
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Dashboard routes (three main pages; legacy routes remain HTML 200)
 # ---------------------------------------------------------------------------
 @app.route("/")
 def dashboard():
-    """Render the main Overview dashboard (HTML)."""
-    matrix = build_matrix()
+    """Main research results dashboard."""
     return render_template(
-        'dashboard/index.html',
-        active='overview',
-        stats=get_dashboard_stats(),
+        'research/results.html',
+        active='results',
+        data=research_results_payload(),
         summary=dataset_summary(),
-        matrix=matrix,
-        chart_data=chart_payload(matrix),
-        controller=controller_snapshot(),
-        current_workload=current_workload,
-        simulated_cpu_utilization=round(simulated_cpu_utilization, 1),
-        strategies=STRATEGIES,
-        strategy_labels=STRATEGY_LABELS,
-        workloads=WORKLOADS,
+    )
+
+
+@app.route("/eaes-diagnostics")
+def eaes_diagnostics():
+    return render_template(
+        'research/diagnostics.html',
+        active='diagnostics',
+        data=research_diagnostic_payload(),
+        summary=dataset_summary(),
+    )
+
+
+@app.route("/methodology")
+def methodology():
+    return render_template(
+        'research/methodology.html',
+        active='methodology',
+        data=research_methodology_payload(),
+        summary=dataset_summary(),
+    )
+
+
+def _compatibility_view(title, target, target_label):
+    return render_template(
+        'research/compatibility.html',
+        active='legacy',
+        title=title,
+        target=target,
+        target_label=target_label,
+        summary=dataset_summary(),
     )
 
 
 @app.route("/autoscaling-comparison")
 def autoscaling_comparison():
-    matrix = build_matrix()
-    return render_template(
-        'dashboard/autoscaling_comparison.html',
-        active='comparison',
-        stats=get_dashboard_stats(),
-        summary=dataset_summary(),
-        matrix=matrix,
-        chart_data=chart_payload(matrix),
-        strategies=STRATEGIES,
-        strategy_labels=STRATEGY_LABELS,
-        workloads=WORKLOADS,
-    )
+    return _compatibility_view('Autoscaling comparison', '/', 'Results dashboard')
 
 
 @app.route("/energy-analysis")
 def energy_analysis():
-    matrix = build_matrix()
-    reduction = {}
-    for workload in WORKLOADS:
-        static_e = matrix['static'][workload]['avg_energy']
-        eaes_e = matrix['energy_aware'][workload]['avg_energy']
-        if static_e and eaes_e is not None and static_e != 0:
-            reduction[workload] = round((static_e - eaes_e) / static_e * 100, 1)
-        else:
-            reduction[workload] = None
-    return render_template(
-        'dashboard/energy_analysis.html',
-        active='energy',
-        stats=get_dashboard_stats(),
-        summary=dataset_summary(),
-        matrix=matrix,
-        chart_data=chart_payload(matrix),
-        reduction=reduction,
-        strategies=STRATEGIES,
-        strategy_labels=STRATEGY_LABELS,
-        workloads=WORKLOADS,
-    )
+    return _compatibility_view('Energy analysis', '/', 'Results dashboard')
 
 
 @app.route("/performance-analysis")
 def performance_analysis():
-    matrix = build_matrix()
-    return render_template(
-        'dashboard/performance_analysis.html',
-        active='performance',
-        stats=get_dashboard_stats(),
-        summary=dataset_summary(),
-        matrix=matrix,
-        chart_data=chart_payload(matrix),
-        strategies=STRATEGIES,
-        strategy_labels=STRATEGY_LABELS,
-        workloads=WORKLOADS,
-    )
+    return _compatibility_view('Performance analysis', '/', 'Results dashboard')
 
 
 @app.route("/experiment-explorer")
 def experiment_explorer():
-    rows = []
-    for index, rec in enumerate(EXPERIMENT_RESULTS, start=1):
-        rows.append({
-            'index': index,
-            'experiment_id': rec.get('experiment_id') or f'EXP-{index:03d}',
-            'strategy': _rec_strategy(rec),
-            'strategy_label': STRATEGY_LABELS.get(_rec_strategy(rec), _rec_strategy(rec)),
-            'workload': rec.get('workload'),
-            'repetition': rec.get('repetition'),
-            'replicas': rec.get('average_replicas'),
-            'cpu': rec.get('avg_cpu'),
-            'energy': rec.get('avg_energy_per_request'),
-            'latency': rec.get('average_latency_ms'),
-            'sla': rec.get('total_sla_violations'),
-            'status': rec.get('status'),
-            'execution_mode': rec.get('execution_mode'),
-        })
-    return render_template(
-        'dashboard/experiment_explorer.html',
-        active='explorer',
-        stats=get_dashboard_stats(),
-        summary=dataset_summary(),
-        rows=rows,
-        repetitions_identical=repetitions_identical(),
-        strategies=STRATEGIES,
-        strategy_labels=STRATEGY_LABELS,
-        workloads=WORKLOADS,
-    )
+    return _compatibility_view('Experiment explorer', '/', 'Results dashboard')
 
 
 @app.route("/research-methodology")
 def research_methodology():
     return render_template(
-        'dashboard/research_methodology.html',
+        'research/methodology.html',
         active='methodology',
-        stats=get_dashboard_stats(),
+        data=research_methodology_payload(),
         summary=dataset_summary(),
-        strategies=STRATEGIES,
-        strategy_labels=STRATEGY_LABELS,
-        workloads=WORKLOADS,
+        legacy_notice=True,
     )
 
 
@@ -408,7 +735,9 @@ def home():
         "workload": current_workload,
         "cpu_percent": round(simulated_cpu_utilization, 1),
         "uptime_s": round(time.time() - app_start_time, 1),
-        "replicas": 1,  # simulated fixed replica indicator
+        "replicas": 1,  # local demo process indicator, not a cluster reading
+        "execution_mode": "simulation-dashboard",
+        "dashboard_pages": ["/", "/eaes-diagnostics", "/methodology"],
         "dashboard": "/",
     })
 
@@ -434,25 +763,28 @@ def ready():
 def info():
     """Information endpoint."""
     return jsonify({
-        "application": "Energy-Aware Autoscaling Framework",
-        "framework": "Kubernetes-based microservices (simulated)",
-        "microservice": "Flask-based resource metrics endpoint",
+        "application": "Energy-Aware Autoscaling Research Framework",
+        "framework": "Discrete-time simulation; separate Minikube validation",
+        "microservice": "Flask demo service and research dashboard",
         "workload": current_workload,
         "cpu_percent": round(simulated_cpu_utilization, 1),
         "memory_percent": round(random.uniform(40, 80), 1),
         "supported_algorithms": [
-            "EAES: Energy-Aware Elastic Scaling (proposed base paper algorithm)",
-            "CPU-based HPA: Kubernetes default Horizontal Pod Autoscaler",
-            "Static: Fixed replica provisioning",
+            "static: fixed replica provisioning",
+            "cpu_threshold: legacy 80/30 controller with hysteresis and cooldowns",
+            "hpa_formula: simulated Kubernetes HPA replica formula",
+            "eaes: EAES-inspired SLA-first controller",
+            "forecasting_eaes: EAES with a Holt forecast over startup delay",
         ],
         "energy_estimation": {
-            "method": "CPU-utilization-based estimation (estimate, not measurement)",
-            "formula": "P = P_idle + (P_max - P_idle) * CPU/100; E_req = P*dt/N_req",
-            "parameters": {"P_idle_W": 30.0, "P_max_W": 80.0, "dt_s": 15},
-            "note": "Energy values are estimates based on CPU utilization, not direct hardware power measurements",
+            "method": "Node-level CPU-utilization model with PUE (estimate, not measurement)",
+            "formula": "P_node = P_idle + (P_max - P_idle) * u; E_node = P_node * dt * PUE",
+            "parameters": {"P_idle_W": 150.0, "P_max_W": 500.0, "PUE": 1.2, "tick_s": 5},
+            "note": "Energy values are modelled from CPU utilisation, not direct hardware power measurements",
         },
         "dataset": dataset_summary()['file'],
         "experiment_count": len(EXPERIMENT_RESULTS),
+        "research_run": (_load_research_bundle()['manifest'] or {}).get('run_id'),
     })
 
 
@@ -644,6 +976,49 @@ def research_papers():
     })
 
 
+@app.route("/api/v1/research/results")
+def research_results_api():
+    return jsonify(research_results_payload())
+
+
+@app.route("/api/v1/research/diagnostic")
+def research_diagnostic_api():
+    return jsonify(research_diagnostic_payload())
+
+
+@app.route("/api/v1/research/methodology")
+def research_methodology_api():
+    return jsonify(research_methodology_payload())
+
+
+@app.route("/api/v1/research/cluster")
+def research_cluster_api():
+    bundle = _load_research_bundle()
+    return jsonify({
+        "execution_mode": "kubernetes_validation",
+        "available": bool(bundle['cluster_rows']),
+        "aggregate": _cluster_aggregate(bundle['cluster_rows']),
+        "rows": bundle['cluster_rows'],
+        "manifest": bundle['cluster_manifest'],
+        "energy_note": "Modelled from measured node CPU; not measured power.",
+    })
+
+
+@app.route("/api/v1/research/tables/<name>")
+def research_table_api(name):
+    allowed = {'descriptive', 'paired', 'friedman', 'nemenyi', 'forecasting', 'sensitivity'}
+    if name not in allowed:
+        return jsonify({"error": "unknown table", "allowed": sorted(allowed)}), 404
+    bundle = _load_research_bundle()
+    rows = bundle['tables'].get(name, [])
+    return jsonify({
+        "table": name,
+        "rows": rows,
+        "columns": list(rows[0].keys()) if rows else [],
+        "run_id": (bundle['manifest'] or {}).get('run_id'),
+    })
+
+
 @app.route("/status")
 def status():
     """Service status endpoint."""
@@ -652,12 +1027,12 @@ def status():
         "workload": current_workload,
         "cpu_utilization": round(simulated_cpu_utilization, 1),
         "uptime_s": round(time.time() - app_start_time, 1),
-        "flask_version": "2.x+",
-        "mode": "simulation-based (Docker Desktop blocked in WSL2)",
+        "flask_version": "3.x",
+        "mode": "simulation for the confirmatory experiment; separate Minikube validation",
         "experiment_count": len(EXPERIMENT_RESULTS),
         "dataset": DATASET_FILE,
-        "docker_status": "Desktop daemon blocked - WSL2 exit error 0x40010004",
-        "kubernetes_status": "Not operational (Docker dependency required)",
+        "docker_status": "Docker Desktop Linux engine available (verified for validation)",
+        "kubernetes_status": "Minikube single-node validation completed; not the confirmatory environment",
     })
 
 
@@ -773,17 +1148,18 @@ if __name__ == "__main__":
     print(f"Initial workload: {current_workload}")
     print(f"Initial CPU utilization: {simulated_cpu_utilization}%")
     print("Dashboard:")
-    print("  GET  / - Overview dashboard")
-    print("  GET  /autoscaling-comparison")
-    print("  GET  /energy-analysis")
-    print("  GET  /performance-analysis")
-    print("  GET  /experiment-explorer")
-    print("  GET  /research-methodology")
+    print("  GET  /                  - paired results")
+    print("  GET  /eaes-diagnostics  - EAES decomposition and ablation")
+    print("  GET  /methodology       - assumptions and provenance")
+    print("  Legacy HTML routes: /autoscaling-comparison, /energy-analysis,")
+    print("                      /performance-analysis, /experiment-explorer,")
+    print("                      /research-methodology")
     print("API:")
     print("  GET  /api/status | /health | /ready | /info")
     print("  GET  /workload/status | POST /workload/change")
     print("  GET  /cpu/light | /cpu/intensive | /metrics")
     print("  GET  /api/v1/experiments | /api/v1/research-papers")
+    print("  GET  /api/v1/research/results | /diagnostic | /methodology | /cluster")
     print("  GET  /status | /controller/status")
     print("=" * 60)
     app.run(host="0.0.0.0", port=5000, threaded=True)

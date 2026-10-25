@@ -1,0 +1,369 @@
+{
+  "control_interval_s": 5,
+  "duration_s": 300,
+  "seed": 9,
+  "ticks": [
+    {
+      "arrivals": 381,
+      "rate_rps": 80.0,
+      "tick": 0,
+      "time_s": 0
+    },
+    {
+      "arrivals": 404,
+      "rate_rps": 80.0,
+      "tick": 1,
+      "time_s": 5
+    },
+    {
+      "arrivals": 426,
+      "rate_rps": 80.0,
+      "tick": 2,
+      "time_s": 10
+    },
+    {
+      "arrivals": 431,
+      "rate_rps": 80.0,
+      "tick": 3,
+      "time_s": 15
+    },
+    {
+      "arrivals": 20,
+      "rate_rps": 5.0,
+      "tick": 4,
+      "time_s": 20
+    },
+    {
+      "arrivals": 20,
+      "rate_rps": 5.0,
+      "tick": 5,
+      "time_s": 25
+    },
+    {
+      "arrivals": 18,
+      "rate_rps": 5.0,
+      "tick": 6,
+      "time_s": 30
+    },
+    {
+      "arrivals": 26,
+      "rate_rps": 5.0,
+      "tick": 7,
+      "time_s": 35
+    },
+    {
+      "arrivals": 25,
+      "rate_rps": 5.0,
+      "tick": 8,
+      "time_s": 40
+    },
+    {
+      "arrivals": 19,
+      "rate_rps": 5.0,
+      "tick": 9,
+      "time_s": 45
+    },
+    {
+      "arrivals": 21,
+      "rate_rps": 5.0,
+      "tick": 10,
+      "time_s": 50
+    },
+    {
+      "arrivals": 28,
+      "rate_rps": 5.0,
+      "tick": 11,
+      "time_s": 55
+    },
+    {
+      "arrivals": 414,
+      "rate_rps": 80.0,
+      "tick": 12,
+      "time_s": 60
+    },
+    {
+      "arrivals": 371,
+      "rate_rps": 80.0,
+      "tick": 13,
+      "time_s": 65
+    },
+    {
+      "arrivals": 371,
+      "rate_rps": 80.0,
+      "tick": 14,
+      "time_s": 70
+    },
+    {
+      "arrivals": 371,
+      "rate_rps": 80.0,
+      "tick": 15,
+      "time_s": 75
+    },
+    {
+      "arrivals": 17,
+      "rate_rps": 5.0,
+      "tick": 16,
+      "time_s": 80
+    },
+    {
+      "arrivals": 27,
+      "rate_rps": 5.0,
+      "tick": 17,
+      "time_s": 85
+    },
+    {
+      "arrivals": 27,
+      "rate_rps": 5.0,
+      "tick": 18,
+      "time_s": 90
+    },
+    {
+      "arrivals": 25,
+      "rate_rps": 5.0,
+      "tick": 19,
+      "time_s": 95
+    },
+    {
+      "arrivals": 20,
+      "rate_rps": 5.0,
+      "tick": 20,
+      "time_s": 100
+    },
+    {
+      "arrivals": 22,
+      "rate_rps": 5.0,
+      "tick": 21,
+      "time_s": 105
+    },
+    {
+      "arrivals": 26,
+      "rate_rps": 5.0,
+      "tick": 22,
+      "time_s": 110
+    },
+    {
+      "arrivals": 27,
+      "rate_rps": 5.0,
+      "tick": 23,
+      "time_s": 115
+    },
+    {
+      "arrivals": 404,
+      "rate_rps": 80.0,
+      "tick": 24,
+      "time_s": 120
+    },
+    {
+      "arrivals": 378,
+      "rate_rps": 80.0,
+      "tick": 25,
+      "time_s": 125
+    },
+    {
+      "arrivals": 406,
+      "rate_rps": 80.0,
+      "tick": 26,
+      "time_s": 130
+    },
+    {
+      "arrivals": 399,
+      "rate_rps": 80.0,
+      "tick": 27,
+      "time_s": 135
+    },
+    {
+      "arrivals": 26,
+      "rate_rps": 5.0,
+      "tick": 28,
+      "time_s": 140
+    },
+    {
+      "arrivals": 19,
+      "rate_rps": 5.0,
+      "tick": 29,
+      "time_s": 145
+    },
+    {
+      "arrivals": 23,
+      "rate_rps": 5.0,
+      "tick": 30,
+      "time_s": 150
+    },
+    {
+      "arrivals": 30,
+      "rate_rps": 5.0,
+      "tick": 31,
+      "time_s": 155
+    },
+    {
+      "arrivals": 20,
+      "rate_rps": 5.0,
+      "tick": 32,
+      "time_s": 160
+    },
+    {
+      "arrivals": 26,
+      "rate_rps": 5.0,
+      "tick": 33,
+      "time_s": 165
+    },
+    {
+      "arrivals": 31,
+      "rate_rps": 5.0,
+      "tick": 34,
+      "time_s": 170
+    },
+    {
+      "arrivals": 26,
+      "rate_rps": 5.0,
+      "tick": 35,
+      "time_s": 175
+    },
+    {
+      "arrivals": 396,
+      "rate_rps": 80.0,
+      "tick": 36,
+      "time_s": 180
+    },
+    {
+      "arrivals": 385,
+      "rate_rps": 80.0,
+      "tick": 37,
+      "time_s": 185
+    },
+    {
+      "arrivals": 401,
+      "rate_rps": 80.0,
+      "tick": 38,
+      "time_s": 190
+    },
+    {
+      "arrivals": 431,
+      "rate_rps": 80.0,
+      "tick": 39,
+      "time_s": 195
+    },
+    {
+      "arrivals": 22,
+      "rate_rps": 5.0,
+      "tick": 40,
+      "time_s": 200
+    },
+    {
+      "arrivals": 21,
+      "rate_rps": 5.0,
+      "tick": 41,
+      "time_s": 205
+    },
+    {
+      "arrivals": 25,
+      "rate_rps": 5.0,
+      "tick": 42,
+      "time_s": 210
+    },
+    {
+      "arrivals": 18,
+      "rate_rps": 5.0,
+      "tick": 43,
+      "time_s": 215
+    },
+    {
+      "arrivals": 25,
+      "rate_rps": 5.0,
+      "tick": 44,
+      "time_s": 220
+    },
+    {
+      "arrivals": 25,
+      "rate_rps": 5.0,
+      "tick": 45,
+      "time_s": 225
+    },
+    {
+      "arrivals": 23,
+      "rate_rps": 5.0,
+      "tick": 46,
+      "time_s": 230
+    },
+    {
+      "arrivals": 16,
+      "rate_rps": 5.0,
+      "tick": 47,
+      "time_s": 235
+    },
+    {
+      "arrivals": 382,
+      "rate_rps": 80.0,
+      "tick": 48,
+      "time_s": 240
+    },
+    {
+      "arrivals": 398,
+      "rate_rps": 80.0,
+      "tick": 49,
+      "time_s": 245
+    },
+    {
+      "arrivals": 423,
+      "rate_rps": 80.0,
+      "tick": 50,
+      "time_s": 250
+    },
+    {
+      "arrivals": 403,
+      "rate_rps": 80.0,
+      "tick": 51,
+      "time_s": 255
+    },
+    {
+      "arrivals": 29,
+      "rate_rps": 5.0,
+      "tick": 52,
+      "time_s": 260
+    },
+    {
+      "arrivals": 27,
+      "rate_rps": 5.0,
+      "tick": 53,
+      "time_s": 265
+    },
+    {
+      "arrivals": 21,
+      "rate_rps": 5.0,
+      "tick": 54,
+      "time_s": 270
+    },
+    {
+      "arrivals": 20,
+      "rate_rps": 5.0,
+      "tick": 55,
+      "time_s": 275
+    },
+    {
+      "arrivals": 19,
+      "rate_rps": 5.0,
+      "tick": 56,
+      "time_s": 280
+    },
+    {
+      "arrivals": 11,
+      "rate_rps": 5.0,
+      "tick": 57,
+      "time_s": 285
+    },
+    {
+      "arrivals": 23,
+      "rate_rps": 5.0,
+      "tick": 58,
+      "time_s": 290
+    },
+    {
+      "arrivals": 28,
+      "rate_rps": 5.0,
+      "tick": 59,
+      "time_s": 295
+    }
+  ],
+  "trace_hash": "fd06ec619afef92a41e963beaffa6cad4f1bc84b7f44cbe451784681aebc51df",
+  "workload": "bursty"
+}

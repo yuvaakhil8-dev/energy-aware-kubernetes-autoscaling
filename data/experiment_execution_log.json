@@ -1,0 +1,245 @@
+[
+  {
+    "experiment_id": "static_light_1",
+    "strategy": "static",
+    "workload": "light",
+    "repetition": 1,
+    "status": "success",
+    "timestamp": 1792956671.1777596,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "static_light_2",
+    "strategy": "static",
+    "workload": "light",
+    "repetition": 2,
+    "status": "success",
+    "timestamp": 1792956686.185006,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "static_light_3",
+    "strategy": "static",
+    "workload": "light",
+    "repetition": 3,
+    "status": "success",
+    "timestamp": 1792956701.1910045,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "static_medium_1",
+    "strategy": "static",
+    "workload": "medium",
+    "repetition": 1,
+    "status": "success",
+    "timestamp": 1792956716.198357,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "static_medium_2",
+    "strategy": "static",
+    "workload": "medium",
+    "repetition": 2,
+    "status": "success",
+    "timestamp": 1792956731.2042234,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "static_medium_3",
+    "strategy": "static",
+    "workload": "medium",
+    "repetition": 3,
+    "status": "success",
+    "timestamp": 1792956746.2120998,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "static_heavy_1",
+    "strategy": "static",
+    "workload": "heavy",
+    "repetition": 1,
+    "status": "success",
+    "timestamp": 1792956761.2186534,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "static_heavy_2",
+    "strategy": "static",
+    "workload": "heavy",
+    "repetition": 2,
+    "status": "success",
+    "timestamp": 1792956776.225636,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "static_heavy_3",
+    "strategy": "static",
+    "workload": "heavy",
+    "repetition": 3,
+    "status": "success",
+    "timestamp": 1792956791.231712,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "hpa_light_1",
+    "strategy": "hpa",
+    "workload": "light",
+    "repetition": 1,
+    "status": "success",
+    "timestamp": 1792956806.239207,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "hpa_light_2",
+    "strategy": "hpa",
+    "workload": "light",
+    "repetition": 2,
+    "status": "success",
+    "timestamp": 1792956821.2471483,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "hpa_light_3",
+    "strategy": "hpa",
+    "workload": "light",
+    "repetition": 3,
+    "status": "success",
+    "timestamp": 1792956836.2538512,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "hpa_medium_1",
+    "strategy": "hpa",
+    "workload": "medium",
+    "repetition": 1,
+    "status": "success",
+    "timestamp": 1792956851.261324,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "hpa_medium_2",
+    "strategy": "hpa",
+    "workload": "medium",
+    "repetition": 2,
+    "status": "success",
+    "timestamp": 1792956866.2681139,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "hpa_medium_3",
+    "strategy": "hpa",
+    "workload": "medium",
+    "repetition": 3,
+    "status": "success",
+    "timestamp": 1792956881.2750216,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "hpa_heavy_1",
+    "strategy": "hpa",
+    "workload": "heavy",
+    "repetition": 1,
+    "status": "success",
+    "timestamp": 1792956896.2823727,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "hpa_heavy_2",
+    "strategy": "hpa",
+    "workload": "heavy",
+    "repetition": 2,
+    "status": "success",
+    "timestamp": 1792956911.29042,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "hpa_heavy_3",
+    "strategy": "hpa",
+    "workload": "heavy",
+    "repetition": 3,
+    "status": "success",
+    "timestamp": 1792956926.296237,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "energy_aware_light_1",
+    "strategy": "energy_aware",
+    "workload": "light",
+    "repetition": 1,
+    "status": "success",
+    "timestamp": 1792956941.3027995,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "energy_aware_light_2",
+    "strategy": "energy_aware",
+    "workload": "light",
+    "repetition": 2,
+    "status": "success",
+    "timestamp": 1792956956.3108387,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "energy_aware_light_3",
+    "strategy": "energy_aware",
+    "workload": "light",
+    "repetition": 3,
+    "status": "success",
+    "timestamp": 1792956971.3195033,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "energy_aware_medium_1",
+    "strategy": "energy_aware",
+    "workload": "medium",
+    "repetition": 1,
+    "status": "success",
+    "timestamp": 1792956986.3275304,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "energy_aware_medium_2",
+    "strategy": "energy_aware",
+    "workload": "medium",
+    "repetition": 2,
+    "status": "success",
+    "timestamp": 1792957001.3363292,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "energy_aware_medium_3",
+    "strategy": "energy_aware",
+    "workload": "medium",
+    "repetition": 3,
+    "status": "success",
+    "timestamp": 1792957016.344385,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "energy_aware_heavy_1",
+    "strategy": "energy_aware",
+    "workload": "heavy",
+    "repetition": 1,
+    "status": "success",
+    "timestamp": 1792957031.3633387,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "energy_aware_heavy_2",
+    "strategy": "energy_aware",
+    "workload": "heavy",
+    "repetition": 2,
+    "status": "success",
+    "timestamp": 1792957046.3798177,
+    "duration_attempted": 15
+  },
+  {
+    "experiment_id": "energy_aware_heavy_3",
+    "strategy": "energy_aware",
+    "workload": "heavy",
+    "repetition": 3,
+    "status": "success",
+    "timestamp": 1792957061.3955276,
+    "duration_attempted": 15
+  }
+]

@@ -1,0 +1,119 @@
+{% extends "research/base.html" %}
+{% block title %}EAES Diagnostics · Energy-Aware Autoscaling{% endblock %}
+{% block heading %}EAES diagnostics{% endblock %}
+{% block subheading %}Denominator checks, provisioning, forecasting ablation, and raw-tick evidence{% endblock %}
+
+{% block content %}
+{% if not data.available %}
+  <section class="callout danger"><strong>No diagnostic artifact found.</strong><p>Run <code>python -m analysis.diagnose</code> after the experiment.</p></section>
+{% else %}
+  <section class="callout info">
+    <strong>Run {{ data.run }}</strong> · execution mode <code>{{ data.execution_mode }}</code>.
+    Every number on this page is generated from the raw per-tick JSONL logs in <code>results/runs/{{ data.run }}/</code>.
+    Node/pod energy conservation error: <code>{{ "%.3e"|format(data.conservation_max_error_j or 0) }} J</code>.
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><h2>EAES vs HPA formula: decomposition</h2><p>Energy per served request, energy per offered request, replica-hours, drops, and SLA violations. Ratios below 1 favour EAES.</p></div>
+      <a class="link-btn" href="/api/v1/research/diagnostic">JSON</a>
+    </div>
+    <div class="chart-wrap"><canvas id="diagnosticChart" height="110"></canvas></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Workload</th><th>EAES J/served</th><th>HPA J/served</th><th>Ratio</th><th>EAES J/offered</th><th>HPA J/offered</th><th>EAES repl-h</th><th>HPA repl-h</th><th>EAES drop</th><th>HPA drop</th><th>EAES SLA</th><th>HPA SLA</th></tr></thead>
+        <tbody>
+        {% for row in data.comparisons %}
+          <tr>
+            <td>{{ row.workload }}</td>
+            <td>{{ "%.3f"|format(row.e_es) }}</td><td>{{ "%.3f"|format(row.h_es) }}</td>
+            <td><span class="tag {{ 'good' if row.es_ratio <= 1 else 'bad' }}">{{ "%.3f"|format(row.es_ratio) }}</span></td>
+            <td>{{ "%.3f"|format(row.e_eo) }}</td><td>{{ "%.3f"|format(row.h_eo) }}</td>
+            <td>{{ "%.3f"|format(row.e_rh) }}</td><td>{{ "%.3f"|format(row.h_rh) }}</td>
+            <td>{{ "%.4f"|format(row.e_drop) }}</td><td>{{ "%.4f"|format(row.h_drop) }}</td>
+            <td>{{ "%.4f"|format(row.e_sla) }}</td><td>{{ "%.4f"|format(row.h_sla) }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><h2>Forecasting ablation</h2><p>Reactive EAES vs forecasting EAES. The forecast uses a Holt model over the 10 s startup horizon.</p></div>
+      <a class="link-btn" href="/api/v1/research/tables/forecasting">Forecast evaluation</a>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Workload</th><th>Seeds</th><th>EAES J/served</th><th>Forecast J/served</th><th>Ratio</th><th>EAES SLA</th><th>Forecast SLA</th><th>EAES repl-h</th><th>Forecast repl-h</th></tr></thead>
+        <tbody>
+        {% for row in data.forecast_comparison %}
+          <tr>
+            <td>{{ row.workload }}</td><td>{{ row.n_seeds }}</td>
+            <td>{{ "%.3f"|format(row.e_es) }}</td><td>{{ "%.3f"|format(row.f_es) }}</td>
+            <td>{{ "%.3f"|format(row.es_ratio) }}</td>
+            <td>{{ "%.4f"|format(row.e_sla) }}</td><td>{{ "%.4f"|format(row.f_sla) }}</td>
+            <td>{{ "%.3f"|format(row.e_rh) }}</td><td>{{ "%.3f"|format(row.f_rh) }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Startup, over-provisioning, and control rules</h2>
+    <p>Pending replicas expose startup delay. Cooldown/stabilization holds show conservative control. Over-provisioning is ready replicas minus the demand-implied minimum at the 0.7 target.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Workload</th><th>Strategy</th><th>Max pending</th><th>Max ready</th><th>Max nodes</th><th>Mean over-provision</th><th>Cooldown/stab holds</th><th>Top rules</th></tr></thead>
+        <tbody>
+        {% for row in data.rule_rows %}
+          <tr>
+            <td>{{ row.workload }}</td><td><span class="tag">{{ row.strategy }}</span></td>
+            <td>{{ "%.1f"|format(row.max_pending) }}</td><td>{{ "%.1f"|format(row.max_ready) }}</td>
+            <td>{{ "%.1f"|format(row.max_active_nodes) }}</td>
+            <td>{% if row.overprovision_mean is not none %}{{ "%.2f"|format(row.overprovision_mean) }}{% else %}n/a{% endif %}</td>
+            <td>{{ "%.1f"|format(row.cooldown_or_stab_holds) }}</td>
+            <td class="small">{{ row.top_rules }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% if data.cluster and data.cluster.aggregate %}
+  <section class="panel">
+    <h2>Separate cluster validation</h2>
+    <p>Native HPA and static modes on a real single-node Minikube cluster. Replica counts are real; energy is modelled from measured node CPU.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Mode</th><th>Reps</th><th>Drop</th><th>p95 ms</th><th>Avg replicas</th><th>Max replicas</th><th>Avg node CPU</th><th>Modelled J/req</th></tr></thead>
+        <tbody>
+        {% for row in data.cluster.aggregate %}
+          <tr><td>{{ row.mode }}</td><td>{{ row.replications }}</td><td>{{ "%.4f"|format(row.drop_rate) }}</td>
+          <td>{{ "%.1f"|format(row.p95_latency_ms) }}</td><td>{{ "%.2f"|format(row.avg_ready_replicas) }}</td>
+          <td>{{ "%.0f"|format(row.max_ready_replicas) }}</td><td>{{ "%.1f"|format(row.avg_node_cpu_percent) }}%</td>
+          <td>{% if row.modelled_energy_per_served_request_j is not none %}{{ "%.2f"|format(row.modelled_energy_per_served_request_j) }}{% else %}n/a{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="panel">
+    <h2>Generated findings</h2>
+    <ul class="findings">{% for finding in data.findings %}<li>{{ finding }}</li>{% endfor %}</ul>
+  </section>
+
+  <section class="callout warning">
+    <strong>Read the trade-off, not just one column.</strong>
+    EAES has lower energy per served request than the HPA formula in these simulations, but it does
+    not always meet the latency SLA under variable/bursty startup transitions; the forecasting variant
+    changes that trade-off. Static has the lowest energy in several workloads only because it drops traffic.
+  </section>
+{% endif %}
+{% endblock %}

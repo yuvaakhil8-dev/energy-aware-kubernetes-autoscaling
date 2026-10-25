@@ -1,0 +1,123 @@
+{% extends "research/base.html" %}
+{% block title %}Methodology · Energy-Aware Autoscaling{% endblock %}
+{% block heading %}Methodology and reproducibility{% endblock %}
+{% block subheading %}Assumptions, strategy distinctions, statistics, and provenance{% endblock %}
+
+{% block content %}
+{% if legacy_notice is defined and legacy_notice %}
+  <section class="callout warning"><strong>Legacy route preserved.</strong> You are viewing the new methodology page through the old <code>/research-methodology</code> URL.</section>
+{% endif %}
+
+<section class="callout info">
+  <strong>Scope.</strong> The confirmatory experiment is a discrete-time simulation. A separate real Minikube/HPA validation is reported independently. No energy value in the simulation is a physical power measurement.
+</section>
+
+<section class="grid-2">
+  <div class="panel">
+    <h2>Experiment design</h2>
+    {% set exp = data.configs.experiment %}
+    <dl class="facts">
+      <dt>Experiment</dt><dd>{{ exp.experiment_id }}</dd>
+      <dt>Duration</dt><dd>{{ exp.duration_s }} s simulated</dd>
+      <dt>Interval</dt><dd>{{ exp.control_interval_s }} s</dd>
+      <dt>Warm-up (excluded)</dt><dd>{{ exp.warmup_s }} s</dd>
+      <dt>Seeds</dt><dd>{{ exp.seeds|length }} ({{ exp.seeds|join(', ') }})</dd>
+      <dt>Workloads</dt><dd>{{ exp.workloads|join(', ') }}</dd>
+      <dt>Strategies</dt><dd>{{ exp.strategies|join(', ') }}</dd>
+      <dt>Bootstrap</dt><dd>{{ exp.bootstrap_resamples }} resamples, seed {{ exp.bootstrap_seed }}</dd>
+    </dl>
+  </div>
+  <div class="panel">
+    <h2>Simulated cluster and SLA</h2>
+    {% set sim = data.configs.simulation %}
+    {% set sla = data.configs.sla %}
+    <dl class="facts">
+      <dt>Pods per node</dt><dd>{{ sim.pods_per_node }}</dd>
+      <dt>Pod capacity</dt><dd>{{ sim.pod_capacity_rps }} req/s</dd>
+      <dt>Pod startup delay</dt><dd>{{ sim.startup_delay_s }} s</dd>
+      <dt>Replica bounds</dt><dd>{{ sim.min_replicas }}–{{ sim.max_replicas }}</dd>
+      <dt>Queue bound</dt><dd>{{ sim.max_queue_factor }} × per-tick capacity</dd>
+      <dt>Base latency</dt><dd>{{ sim.base_latency_ms }} ms</dd>
+      <dt>Latency SLA</dt><dd>{{ sla.latency_sla_ms }} ms</dd>
+      <dt>Ceiling / margin</dt><dd>{{ sla.utilization_ceiling }} / {{ sla.margin_threshold }}</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Five strategies are kept distinct</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Strategy</th><th>Definition</th></tr></thead>
+      <tbody>
+      {% for key, value in data.strategy_distinctions.items() %}
+        <tr><td><span class="tag">{{ key }}</span></td><td>{{ value }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warning">
+    <strong>Naming guardrail.</strong> <code>cpu_threshold</code> is the legacy 80/30 controller, not HPA.
+    <code>hpa_formula</code> is a simulation of the Kubernetes HPA replica formula, not the cluster HPA controller.
+    Native Kubernetes HPA is used only in the separate cluster validation.
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Node-level energy model</h2>
+  <p>The model is an output metric, never a scaling input. For each active node:</p>
+  <pre class="formula">P_node(u) = P_idle + (P_max - P_idle) · u        [W]
+E_node    = P_node(u) · Δt · PUE + startup_energy [J]
+u         = served requests on the node / node capacity in the tick</pre>
+  <p>Dynamic energy is attributed to pods by CPU-use share; idle and startup energy by requested-resource share. The per-pod attribution must sum to node energy. The sensitivity analysis recomputes energy from the same raw active-node/utilisation data under low/nominal/high power and PUE 1.0–1.6. Scaling decisions do not depend on energy, so this is a valid post-hoc energy recalculation.</p>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Scenario</th><th>P_idle (W)</th><th>P_max (W)</th><th>Default PUE</th></tr></thead>
+      <tbody>
+      {% for name, scenario in data.configs.energy.scenarios.items() %}
+        <tr><td>{{ name }}</td><td>{{ scenario.p_idle_w }}</td><td>{{ scenario.p_max_w }}</td><td>{{ data.configs.energy.pue }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="grid-2">
+  <div class="panel">
+    <h2>Statistics</h2>
+    <ul class="findings">
+      {% for item in data.statistics %}<li>{{ item }}</li>{% endfor %}
+    </ul>
+    <p>Primary metrics use the post-warm-up window. Zero-served runs yield a null energy-per-served value; no artificial denominator is inserted. Holm correction is applied within each workload × baseline family.</p>
+  </div>
+  <div class="panel">
+    <h2>Reproduction</h2>
+    <pre class="formula">{% for command in data.reproduce_commands %}{{ command }}
+{% endfor %}</pre>
+    <p>Config hash: <code>{{ data.combined_config_hash or 'n/a' }}</code></p>
+    <p>Run id: <code>{{ data.run_id or 'n/a' }}</code> · Git commit: <code>{{ data.git_commit or 'n/a' }}</code></p>
+    <p>Execution mode: <strong>{{ data.execution_mode or 'n/a' }}</strong></p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Original dataset integrity</h2>
+  <p>The original datasets are frozen and are not used for the new statistical inference because the 27-row file contains nine deterministic cells copied three times. Their SHA-256 hashes are:</p>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>File</th><th>SHA-256</th></tr></thead>
+      <tbody>{% for name, digest in data.dataset_hashes.items() %}<tr><td>{{ name }}</td><td class="mono">{{ digest }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Limitations</h2>
+  <ul class="findings">{% for item in data.limitations %}<li>{{ item }}</li>{% endfor %}</ul>
+  <div class="button-row">
+    <a class="btn" href="/">Back to results</a>
+    <a class="btn ghost" href="/eaes-diagnostics">EAES diagnostics</a>
+    <a class="btn ghost" href="/api/v1/research/methodology">Methodology JSON</a>
+  </div>
+</section>
+{% endblock %}
