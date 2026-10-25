@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: energy-aware-controller-config
+  namespace: energy-aware-dev
+data:
+  controller-config.yaml: |
+    min_replicas: 1
+    max_replicas: 10
+    target_cpu_util: 60
+    scale_up_threshold: 80
+    scale_down_threshold: 30
+    hysteresis: 5
+    cooldown_seconds: 60
+    sla_latency_threshold_ms: 500
+    energy_per_request_target: 1.0
+    sustained_low_duration: 30
+    metric_samples: 20
+    check_interval: 15
+    scale_change_cooldown: 30

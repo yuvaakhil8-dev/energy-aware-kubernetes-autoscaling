@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Experiment Explorer{% endblock %}
+{% block heading %}Experiment Explorer{% endblock %}
+{% block subheading %}Full 27-record dataset with client-side filtering and CSV export{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <div class="toolbar">
+    <div class="filter">
+      <label for="filterStrategy">Strategy</label>
+      <select id="filterStrategy">
+        <option value="">All</option>
+        {% for s in strategies %}<option value="{{ s }}">{{ strategy_labels[s] }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="filter">
+      <label for="filterWorkload">Workload</label>
+      <select id="filterWorkload">
+        <option value="">All</option>
+        {% for w in workloads %}<option value="{{ w }}">{{ w|capitalize }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="filter">
+      <label for="filterRepetition">Repetition</label>
+      <select id="filterRepetition">
+        <option value="">All</option>
+        {% for rep in summary.repetitions.keys() %}<option value="{{ rep }}">{{ rep }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="filter">
+      <label for="searchBox">Search</label>
+      <input id="searchBox" type="search" placeholder="experiment id…">
+    </div>
+    <button id="exportCsv" class="btn">Export CSV</button>
+  </div>
+  <p class="panel-sub">
+    Showing <strong id="visibleCount">{{ rows|length }}</strong> of {{ rows|length }} records
+    from <code>{{ summary.file or 'dataset' }}</code>.
+  </p>
+
+  {% if repetitions_identical %}
+    <p class="warn">
+      Data-quality flag: {{ repetitions_identical }} strategy×workload cells contain three repetitions with
+      identical metric values. This is pseudo-replication — the repetitions are not independent samples.
+      Values are shown as recorded and were not altered.
+    </p>
+  {% endif %}
+
+  <div class="table-wrap">
+    <table id="experimentTable">
+      <thead>
+        <tr>
+          <th>ID</th><th>Strategy</th><th>Workload</th><th>Rep</th><th>Replicas</th>
+          <th>CPU %</th><th>Energy/req (J, est.)</th><th>Latency (ms)</th><th>SLA</th><th>Status</th><th>Mode</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in rows %}
+        <tr
+          data-strategy="{{ row.strategy }}"
+          data-workload="{{ row.workload }}"
+          data-repetition="{{ row.repetition }}"
+          data-search="{{ row.experiment_id|lower }}">
+          <td class="mono">{{ row.experiment_id }}</td>
+          <td><span class="tag tag-{{ row.strategy }}">{{ row.strategy_label }}</span></td>
+          <td>{{ row.workload }}</td>
+          <td>{{ row.repetition }}</td>
+          <td>{{ row.replicas if row.replicas is not none else '—' }}</td>
+          <td>{{ row.cpu if row.cpu is not none else '—' }}</td>
+          <td>{{ row.energy if row.energy is not none else '—' }}</td>
+          <td>{{ row.latency if row.latency is not none else '—' }}</td>
+          <td>{{ row.sla if row.sla is not none else '—' }}</td>
+          <td><span class="status status-{{ row.status }}">{{ row.status or 'unknown' }}</span></td>
+          <td>{{ row.execution_mode or '—' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="11" class="empty">No experiment records available.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

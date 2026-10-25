@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}404 Not Found{% endblock %}
+{% block heading %}404 — Page not found{% endblock %}
+{% block subheading %}The requested route does not exist{% endblock %}
+{% block content %}
+<section class="panel">
+  <p>The page you requested is not registered in this Flask application.</p>
+  <p><a class="btn" href="/">Return to the Overview dashboard</a></p>
+</section>
+{% endblock %}

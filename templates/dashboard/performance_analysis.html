@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Performance Analysis{% endblock %}
+{% block heading %}Performance Analysis{% endblock %}
+{% block subheading %}Latency, replicas and SLA outcomes recorded in the experiment dataset{% endblock %}
+
+{% block content %}
+<section class="panel callout">
+  <h2>Data scope</h2>
+  <p>
+    Throughput and response-time percentiles were <strong>not collected</strong> in this dataset, so they are
+    not displayed. Only latency, replica counts, CPU utilisation and SLA violations present in
+    <code>{{ summary.file or 'the dataset' }}</code> are shown. Missing values display as “—”.
+  </p>
+</section>
+
+<section class="grid two">
+  <div class="panel">
+    <h2>Average latency by workload</h2>
+    <p class="panel-sub">Milliseconds. SLA threshold used by the controller: 500 ms.</p>
+    <div class="chart-wrap"><canvas id="latencyChart"></canvas></div>
+  </div>
+  <div class="panel">
+    <h2>SLA violations by workload</h2>
+    <p class="panel-sub">Count of recorded violations.</p>
+    <div class="chart-wrap"><canvas id="slaChart"></canvas></div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Performance table</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Strategy</th><th>Workload</th><th>Avg latency (ms)</th><th>Avg replicas</th><th>Avg CPU %</th><th>SLA violations</th><th>Records</th></tr>
+      </thead>
+      <tbody>
+      {% for strategy in strategies %}
+        {% for workload in workloads %}
+          {% set cell = matrix[strategy][workload] %}
+          <tr>
+            <td><span class="tag tag-{{ strategy }}">{{ strategy_labels[strategy] }}</span></td>
+            <td>{{ workload }}</td>
+            <td>{{ cell.avg_latency if cell.avg_latency is not none else '—' }}</td>
+            <td>{{ cell.avg_replicas if cell.avg_replicas is not none else '—' }}</td>
+            <td>{{ cell.avg_cpu if cell.avg_cpu is not none else '—' }}</td>
+            <td>{{ cell.sla_violations if cell.sla_violations is not none else '—' }}</td>
+            <td>{{ cell.count }}</td>
+          </tr>
+        {% endfor %}
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script id="chartData" type="application/json">{{ chart_data|tojson }}</script>
+{% endblock %}

@@ -1,0 +1,850 @@
+#!/usr/bin/env python3
+"""
+Energy-Aware Autoscaling Controller for Kubernetes.
+
+Implements the Energy-Aware Elastic Scaling (EAES) algorithm adapted from
+the base research paper (Li et al., 2025, JNCA 10.1016/j.jnca.2025.104218).
+
+The controller considers CPU utilization, request rate, latency, and energy
+per request to make scaling decisions for Kubernetes Deployments.
+
+Key Features:
+- Feedback control loop enhanced with energy awareness
+- SLA-aware scale-up (latency threshold)
+- Hysteresis for stable scale-down
+- Energy per request estimation (CPU-utilization-based, explicitly labeled)
+- Cooldown periods to prevent oscillations
+- Minimum and maximum replica limits
+- Configurable parameters
+- Decision logging
+- Kubernetes API integration (real or simulated mode)
+"""
+
+import time
+import json
+import random
+import threading
+from collections import deque
+from typing import Dict, List, Optional, Any
+
+# ---------------------------------------------------------------------------
+# Try to import Kubernetes client; fall back to simulated mode
+# ---------------------------------------------------------------------------
+
+K8S_AVAILABLE = False
+try:
+    from kubernetes import client, config
+    # Try to load in-cluster config first, then kubeconfig
+    try:
+        config.load_incluster_config()
+        print("Using in-cluster Kubernetes configuration")
+    except config.config_exception.ConfigException:
+        try:
+            config.load_kube_config()
+            print("Using kubeconfig Kubernetes configuration")
+        except config.config_exception.ConfigException:
+            print("No Kubernetes configuration found - running in simulated mode")
+    K8S_AVAILABLE = True
+    print("Kubernetes client available - using real API mode")
+except ImportError:
+    print("Kubernetes Python client not installed - running in simulated mode")
+    print("Install with: pip install kubernetes")
+
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
+DEFAULT_CONFIG = {
+    "min_replicas": 1,
+    "max_replicas": 10,
+    "target_cpu_util": 60,  # percentage - target for normal operation
+    "scale_up_threshold": 80,  # percentage - trigger scale-up when CPU exceeds this
+    "scale_down_threshold": 30,  # percentage - consider scale-down when CPU below this
+    "hysteresis": 5,  # percentage difference needed to reverse direction
+    "cooldown_seconds": 60,  "scale_change_cooldown": 30,  # wait time between scaling actions
+    "sla_latency_threshold_ms": 500,  # max acceptable average latency (ms)
+    "energy_weight": 0.3,  # weight of energy factor in scaling decision (0-1)
+    "energy_per_request_target": 1.0,  # target energy per request (J, estimated)
+    "sustained_low_duration": 30,  # seconds of sustained low load before scale-down
+    "metric_samples": 20,  # number of recent samples to average
+    "check_interval": 15,  # seconds between scaling checks
+    "scale_change_cooldown": 30,  # additional cooldown after any scale change
+}
+
+# ---------------------------------------------------------------------------
+# Energy Estimation Model
+# ---------------------------------------------------------------------------
+
+# Based on the EAES paper's energy model, adapted for CPU-utilization-based estimation.
+# The original paper models energy consumption caused by idle containers and proposes
+# an energy efficiency model based on SLA. Here we estimate energy per request from
+# CPU utilization - this is a CPU-based ESTIMATION, not a direct hardware power measurement.
+
+# Power model: P = P_idle + (P_max - P_idle) * util / 100
+# Where:
+#   P_idle ≈ 30W (estimated idle power for a cloud VM container)
+#   P_max ≈ 80W (estimated max power for a container under full load)
+#   util = CPU utilization percentage (0-100)
+#   Δt = measurement interval in seconds
+#   N_req = number of successful requests in interval
+
+# Energy per request: E_req = (P_idle + (P_max - P_idle) * util/100) * Δt / N_req
+
+# CRITICAL: These coefficients are ESTIMATED, not directly measured hardware values.
+# They are provided for demonstration and educational purposes. The project explicitly
+# distinguishes between estimated energy and direct hardware power measurement.
+
+ENERGY_IDLE_POWER_W = 30.0   # Estimated idle power (Watts) - FOR ESTIMATION ONLY
+ENERGY_MAX_POWER_W = 80.0    # Estimated max power (Watts) - FOR ESTIMATION ONLY
+ENERGY_INTERVAL_SECONDS = 15  # Metric collection interval
+
+
+def estimate_power(utilization_percent: float) -> float:
+    """
+    Estimate power consumption from CPU utilization.
+    
+    CRITICAL: This is a CPU-utilization-based ESTIMATION, NOT a direct hardware power measurement.
+    
+    Formula: P = P_idle + (P_max - P_idle) * util/100
+    
+    Parameters:
+    - utilization_percent: CPU utilization percentage (0-100)
+    
+    Returns: Estimated power in Watts
+    
+    Assumptions (must be documented):
+    1. Power scales linearly with CPU utilization (approximation)
+    2. P_idle represents power when CPU is idle (but container is running)
+    3. P_max represents power when CPU is at 100% utilization
+    3. Actual hardware power depends on many factors (CPU model, other components, etc.)
+    """
+    return ENERGY_IDLE_POWER_W + (ENERGY_MAX_POWER_W - ENERGY_IDLE_POWER_W) * utilization_percent / 100.0
+
+
+def estimate_energy_per_request(utilization_percent: float,
+                                num_requests: int,
+                                interval_seconds: float = ENERGY_INTERVAL_SECONDS) -> float:
+    """
+    Estimate energy per successful request.
+    
+    E_req = P * Δt / N_req
+    
+    CRITICAL: This is an ESTIMATED energy per request in JOULES, not a direct hardware measurement.
+    
+    Parameters:
+    - utilization_percent: CPU utilization % (0-100)
+    - num_requests: Number of successful requests in the interval
+    - interval_seconds: Time interval over which metrics were collected
+    
+    Returns: Estimated energy per request in Joules (J/request)
+    
+    Raises: ValueError if num_requests is zero or negative
+    """
+    if num_requests <= 0:
+        raise ValueError("Number of requests must be positive for energy estimation")
+    
+    power_w = estimate_power(utilization_percent)
+    energy_joules = power_w * interval_seconds
+    energy_per_req = energy_joules / num_requests
+    
+    return energy_per_req
+
+
+# ---------------------------------------------------------------------------
+# Metrics Collection Class
+# ---------------------------------------------------------------------------
+
+class MetricsCollector:
+    """Collects and stores monitoring metrics for scaling decisions."""
+    
+    def __init__(self, max_samples: int = DEFAULT_CONFIG["metric_samples"]):
+        self.max_samples = max_samples
+        self.cpu_samples: deque = deque(maxlen=max_samples)
+        self.request_rate_samples: deque = deque(maxlen=max_samples)
+        self.latency_samples: deque = deque(maxlen=max_samples)
+        self.request_count = 0
+        self.successful_count = 0
+        self.failed_count = 0
+        self.last_check = time.time()
+        self.lock = threading.Lock()
+    
+    def update(self, cpu_util: float, request_rate: float, 
+                avg_latency: float, successful: int, failed: int):
+        """Update metrics with latest measurements."""
+        with self.lock:
+            self.cpu_samples.append(cpu_util)
+            self.request_rate_samples.append(request_rate)
+            self.latency_samples.append(avg_latency)
+            self.request_count += successful + failed
+            self.successful_count += successful
+            self.failed_count += failed
+            self.last_check = time.time()
+    
+    def get_average_cpu(self) -> float:
+        """Get average CPU utilization from recent samples."""
+        if not self.cpu_samples:
+            return 0.0
+        return sum(self.cpu_samples) / len(self.cpu_samples)
+    
+    def get_average_latency(self) -> float:
+        """Get average latency from recent samples (ms)."""
+        if not self.latency_samples:
+            return 0.0
+        return sum(self.latency_samples) / len(self.latency_samples)
+    
+    def get_average_request_rate(self) -> float:
+        """Get average request rate (req/s) from recent samples."""
+        if not self.request_rate_samples:
+            return 0.0
+        return sum(self.request_rate_samples) / len(self.request_rate_samples)
+    
+    def get_energy_per_request_estimate(self) -> float:
+        """Get estimated energy per request based on current CPU utilization."""
+        avg_cpu = self.get_average_cpu()
+        return estimate_energy_per_request(avg_cpu, max(1, self.successful_count))
+    
+    def get_utilization_percentage(self) -> float:
+        """Get current CPU utilization percentage."""
+        return self.get_average_cpu()
+    
+    def get_successful_request_count(self) -> int:
+        """Get cumulative successful request count."""
+        return self.successful_count
+
+
+# ---------------------------------------------------------------------------
+# Autoscaling Controller
+# ---------------------------------------------------------------------------
+
+class EnergyAwareController:
+    """
+    Energy-aware autoscaling controller adapted from the EAES algorithm (Li et al., 2025).
+    
+    The EAES algorithm enhances the standard Kubernetes HPA feedback control method
+    by considering energy consumption caused by idle containers and making SLA-aware
+    scaling decisions.
+    
+    This controller considers:
+    - CPU utilization (feedback control component)
+    - Request rate (workload awareness)
+    - Average latency (SLA awareness)
+    - Energy per request estimation (energy efficiency)
+    - Hysteresis and cooldown (stability guarantees)
+    - Minimum and maximum replica limits
+    """
+    
+    def __init__(self, config: Dict = None, deployment_name: str = "default",
+                 namespace: str = "default"):
+        self.config = config or DEFAULT_CONFIG.copy()
+        self.deployment_name = deployment_name
+        self.namespace = namespace
+        
+        # Metrics and state
+        self.metrics = MetricsCollector(self.config["metric_samples"])
+        self.current_replicas = self.config["min_replicas"]
+        self.target_replicas = self.config["min_replicas"]
+        
+        # Scaling state for hysteresis and cooldown
+        self.last_scale_direction = "none"  # "up", "down", "none"
+        self.last_scale_time = 0.0
+        self.scale_change_time = 0.0  # time of last actual scale change
+        self.scale_lock = threading.Lock()
+        self.running = False
+        
+        # History for trend analysis
+        self.cpu_history: deque = deque(maxlen=40)
+        self.energy_history: deque = deque(maxlen=40)
+        self.latency_history: deque = deque(maxlen=40)
+        
+        # SLA tracking
+        self.sla_violations = 0
+        self.total_requests = 0
+        self.sla_check_count = 0
+        self.sla_compliant_checks = 0
+        
+        # Decision logging
+        self.decision_log: List[Dict] = []
+        self.max_log_entries = 100
+    
+    def set_current_replicas(self, count: int):
+        """Set the current known replica count (called after API update)."""
+        with self.scale_lock:
+            self.current_replicas = count
+            if self.target_replicas < count:
+                self.target_replicas = count
+    
+    def update_metrics(self, cpu_util: float, request_rate: float,
+                       avg_latency: float, successful: int, failed: int):
+        """Update metrics collector with latest measurements."""
+        self.metrics.update(cpu_util, request_rate, avg_latency, successful, failed)
+        # Also update our tracking
+        with self.scale_lock:
+            self.cpu_history.append(cpu_util)
+            self.latency_history.append(avg_latency)
+            self.total_requests += successful + failed
+            self.sla_check_count += 1
+            if avg_latency <= self.config["sla_latency_threshold_ms"]:
+                self.sla_compliant_checks += 1
+    
+    def check_sla_compliance(self, avg_latency_ms: float) -> bool:
+        """Check if current latency is within SLA threshold."""
+        return avg_latency_ms <= self.config["sla_latency_threshold_ms"]
+    
+    def record_sla_violation(self):
+        """Record an SLA violation event."""
+        with self.scale_lock:
+            self.sla_violations += 1
+    
+    def scaling_decision(self) -> Optional[int]:
+        """
+        Make a scaling decision based on the EAES algorithm.
+        
+        Returns:
+        - positive integer: scale up by this many replicas
+        - negative integer: scale down by this many replicas (absolute value)
+        - None: no scaling action needed
+        
+        Decision logic follows the EAES algorithm structure:
+        1. SLA compliance check (highest priority)
+        2. Energy per request assessment
+        3. CPU utilization analysis with hysteresis
+        4. Sustained load condition check
+        5. Cooldown period enforcement
+        6. Replica limit enforcement
+        """
+        with self.scale_lock:
+            return self._make_decision_internal()
+    
+    def _make_decision_internal(self) -> Optional[int]:
+        """Internal scaling decision logic."""
+        # Gather current metrics
+        avg_cpu = self.metrics.get_average_cpu()
+        avg_latency = self.metrics.get_average_latency()
+        avg_request_rate = self.metrics.get_average_request_rate()
+        energy_per_req = self.metrics.get_energy_per_request_estimate()
+        successful_count = self.metrics.get_successful_request_count()
+        
+        # Update histories
+        self.cpu_history.append(avg_cpu)
+        self.energy_history.append(energy_per_req)
+        self.latency_history.append(avg_latency)
+        
+        # Trim histories to reasonable size
+        while len(self.cpu_history) > 40:
+            self.cpu_history.popleft()
+        while len(self.energy_history) > 40:
+            self.energy_history.popleft()
+        while len(self.latency_history) > 40:
+            self.latency_history.popleft()
+        
+        # Get current replica count
+        current = self.current_replicas
+        minimum = self.config["min_replicas"]
+        maximum = self.config["max_replicas"]
+        
+        # === SLA COMPLIANCE CHECK (Highest Priority) ===
+        
+        sla_ok = self.check_sla_compliance(avg_latency)
+        
+        if not sla_ok:
+            # SLA violated - must scale up (or at minimum not scale down)
+            self.sla_violations += 1
+            # Record the violation in history
+            log_entry = {
+                "timestamp": time.time(),
+                "event": "sla_violation",
+                "avg_cpu": avg_cpu,
+                "avg_latency_ms": avg_latency,
+                "current_replicas": current,
+                "energy_per_req": energy_per_req,
+            }
+            self._log_decision("sla_violation", None, log_entry)
+            return 1  # Scale up to address SLA violation
+        
+        # SLA is compliant - continue with normal decision logic
+        self.sla_compliant_checks += 1
+        
+        # === ENERGY EFFICIENCY ASSESSMENT ===
+        
+        # If energy per request is significantly above target, we may need
+        # to adjust replica count (more replicas could mean lower per-request energy
+        # if current allocation is excessive, or fewer replicas if we're over-provisioned)
+        
+        energy_above_target = energy_per_req > self.config["energy_per_request_target"]
+        energy_significant_above = energy_per_req > self.config["energy_per_request_target"] * 1.5
+        
+        # === CPU UTILIZATION ANALYSIS WITH HYSTERESIS ===
+        
+        # Count how many recent samples show low CPU
+        low_cpu_samples = sum(1 for c in self.cpu_history 
+                             if c <= self.config["scale_down_threshold"])
+        
+        # Count how many recent samples show high CPU
+        high_cpu_samples = sum(1 for c in self.cpu_history 
+                              if c >= self.config["scale_up_threshold"])
+        
+        # Check for sustained low load (EAES paper condition)
+        # The paper requires "sustained low-load conditions before scale-down"
+        sustained_low = (low_cpu_samples >= 3 and len(self.cpu_history) >= 3)
+        
+        # Check for sustained high load
+        sustained_high = (high_cpu_samples >= 3 and len(self.cpu_history) >= 3)
+        
+        # === COOLDOWN CHECK ===
+        
+        time_since_last_scale = time.time() - self.last_scale_time
+        cooldown_passed = (time_since_last_scale >= self.config["cooldown_seconds"])
+        additional_cooldown_passed = (time_since_last_scale >= self.config["scale_change_cooldown"])
+        
+        # === SCALE-UP CONDITIONS ===
+        
+        scale_up_reasons = []
+        scale_down_reasons = []
+        decision = None
+        scale_amount = 1  # default single replica change
+        
+        # Scale-up: SLA violated - highest priority
+        if not sla_ok:
+            decision = scale_amount
+            scale_up_reasons.append("sla_violation")
+        
+        # Scale-up: CPU consistently high
+        elif sustained_high:
+            decision = scale_amount
+            scale_up_reasons.append("sustained_high_cpu")
+        
+        # Scale-up: CPU high + energy inefficient (and SLA OK)
+        elif avg_cpu >= self.config["scale_up_threshold"] and energy_above_target:
+            decision = scale_amount
+            scale_up_reasons.append("high_cpu_high_energy")
+        
+        # Scale-up: CPU near target + growing workload
+        elif (avg_cpu >= self.config["target_cpu_util"] and 
+              avg_cpu < self.config["scale_up_threshold"] and
+              energy_above_target):
+            # Gradual scale-up
+            decision = 1  # single replica
+            scale_up_reasons.append("cpu_near_target_energy_inefficient")
+        
+        # Scale-up: Request rate growing significantly
+        elif (avg_request_rate > self.config["target_cpu_util"] * 1.5 and 
+              energy_above_target):
+            decision = scale_amount
+            scale_up_reasons.append("workload_growing_energy_inefficient")
+        
+        # === SCALE-DOWN CONDITIONS ===
+        
+        # Scale-down: SLA compliant + sustained low CPU + energy would improve
+        if sla_ok and sustained_low and energy_above_target:
+            # Only scale down if above minimum replicas
+            if current > minimum:
+                decision = -scale_amount  # negative = scale down
+                scale_down_reasons.append("sla_compliant_sustained_low_energy_above_target")
+        
+        # Scale-down: CPU very low + stable + SLA compliant
+        elif (sla_ok and avg_cpu <= self.config["scale_down_threshold"] - self.config["hysteresis"] 
+              and current > minimum):
+            # Additional check: have we been low long enough?
+            low_cpu_count_recent = sum(1 for c in list(self.cpu_history)[-10:] 
+                                      if c <= self.config["scale_down_threshold"])
+            if low_cpu_count_recent >= 3:
+                decision = -scale_amount
+                scale_down_reasons.append("cpu_very_low_stable_sla_compliant")
+        
+        # === MAKE FINAL DECISION ===
+        
+        if decision is not None:
+            # Enforce replica limits
+            if decision > 0:  # scale up
+                new_count = min(maximum, current + decision)
+            else:  # scale down (or no change)
+                new_count = max(minimum, current + decision)
+
+            # Check if actual change occurred
+            if new_count != current:
+                # Adjust decision to reflect actual change
+                decision = new_count - current
+            else:
+                decision = 0  # no change needed
+            
+            if decision != 0:
+                # Apply the scaling decision
+                actual_new_count = current + decision
+                
+                # Update controller state
+                self.current_replicas = actual_new_count
+                self.target_replicas = actual_new_count
+                self.last_scale_time = time.time()
+                self.last_scale_direction = "up" if decision > 0 else "down"
+                
+                # Log the decision
+                log_entry = {
+                    "timestamp": time.time(),
+                    "event": "scaling_decision",
+                    "decision": "scale_up" if decision > 0 else "scale_down",
+                    "decision_value": decision,
+                    "previous_replicas": current,
+                    "new_replicas": actual_new_count,
+                    "avg_cpu": round(avg_cpu, 1),
+                    "avg_latency_ms": round(avg_latency, 1),
+                    "avg_request_rate": round(avg_request_rate, 1),
+                    "energy_per_req_j": round(energy_per_req, 3),
+                    "sla_compliant": sla_ok,
+                    "reasons": scale_up_reasons + scale_down_reasons,
+                    "sustained_low": sustained_low,
+                    "sustained_high": sustained_high,
+                    "energy_above_target": energy_above_target,
+                }
+                self._log_decision(log_entry)
+                
+                return decision
+        
+        # No scaling action - log it
+        if self.decision_log:
+            # Just update the latest log entry's "no_change" status
+            pass
+        
+        return None  # No scaling action needed
+    
+    def _log_decision(self, entry: Dict):
+        """Log a scaling decision event."""
+        self.decision_log.append(entry)
+        if len(self.decision_log) > self.max_log_entries:
+            self.decision_log.pop(0)
+        
+        # Also write to CSV file
+        import csv
+        import os
+        log_file = "scaling_decisions.csv"
+        file_exists = os.path.exists(log_file)
+        
+        try:
+            row = [
+                entry.get("timestamp", time.time()),
+                entry.get("event", "unknown"),
+                entry.get("previous_replicas"),
+                entry.get("new_replicas"),
+                entry.get("avg_cpu"),
+                entry.get("avg_latency_ms"),
+                entry.get("avg_request_rate"),
+                entry.get("energy_per_req_j"),
+                entry.get("decision"),
+                entry.get("sla_compliant", False),
+                entry.get("reasons", []),
+                entry.get("sustained_low", False),
+                entry.get("sustained_high", False),
+                entry.get("energy_above_target", False),
+            ]
+            
+            with open(log_file, 'a', newline='') as f:
+                writer = csv.writer(f)
+                if not file_exists:
+                    writer.writerow(["timestamp", "event", "prev_replicas", "new_replicas",
+                                     "avg_cpu", "avg_latency_ms", "avg_request_rate",
+                                     "energy_per_req_j", "decision", "sla_compliant",
+                                     "reasons", "sustained_low", "sustained_high", "energy_above_target"])
+                writer.writerow(row)
+        except Exception as e:
+            print(f"Logging error: {e}")
+    
+    def get_status(self) -> Dict:
+        """Get comprehensive controller status."""
+        with self.scale_lock:
+            avg_cpu = self.metrics.get_average_cpu()
+            avg_latency = self.metrics.get_average_latency()
+            avg_request_rate = self.metrics.get_average_request_rate()
+            energy_per_req = self.metrics.get_energy_per_request_estimate()
+            
+            # Calculate SLA compliance rate
+            sla_rate = 0
+            if self.sla_check_count > 0:
+                sla_rate = (self.sla_compliant_checks / self.sla_check_count) * 100
+            
+            return {
+                "current_replicas": self.current_replicas,
+                "target_replicas": self.target_replicas,
+                "min_replicas": self.config["min_replicas"],
+                "max_replicas": self.config["max_replicas"],
+                "avg_cpu": round(avg_cpu, 1),
+                "avg_latency_ms": round(avg_latency, 1),
+                "avg_request_rate": round(avg_request_rate, 2),
+                "energy_per_request_estimate": round(energy_per_req, 3),
+                "energy_per_request_target": self.config["energy_per_request_target"],
+                "energy_above_target": energy_per_req > self.config["energy_per_request_target"],
+                "last_scale_direction": self.last_scale_direction,
+                "time_since_last_scale": round(time.time() - self.last_scale_time, 1),
+                "sla_violations": self.sla_violations,
+                "sla_compliance_rate": round(sla_rate, 1),
+                "sla_check_count": self.sla_check_count,
+                "sla_compliant": avg_latency <= self.config["sla_latency_threshold_ms"],
+                "sla_compliant_checks": self.sla_compliant_checks,
+                "controller_running": self.running,
+                "scaling_decision_count": len(self.decision_log),
+                "hysteresis": self.config["hysteresis"],
+                "cooldown_seconds": self.config["cooldown_seconds"],
+            }
+    
+    def start_monitoring(self, interval: float = None) -> threading.Thread:
+        """Start continuous monitoring and scaling loop."""
+        self.running = True
+        interval = interval or self.config["check_interval"]
+        
+        def monitoring_loop():
+            iteration = 0
+            while self.running:
+                try:
+                    iteration += 1
+                    decision = self.scaling_decision()
+                    
+                    if decision is not None:
+                        self._apply_scaling(decision)
+                    
+                    # Log status every few iterations
+                    if iteration % 5 == 0:
+                        status = self.get_status()
+                        # print(f"Iteration {iteration}: CPU={status['avg_cpu']}%, "
+                        #       f"Replicas={status['current_replicas']}, "
+                        #       f"SLA={status['sla_compliance_rate']}%")
+                    
+                except Exception as e:
+                    print(f"Scaling check error (iteration {iteration}): {e}")
+                    import traceback
+                    traceback.print_exc()
+                
+                time.sleep(interval)
+        
+        thread = threading.Thread(target=monitoring_loop, daemon=True)
+        thread.start()
+        return thread
+    
+    def _apply_scaling(self, delta: int):
+        """Apply scaling change to the Deployment."""
+        with self.scale_lock:
+            if delta == 0:
+                return  # No actual change needed
+            
+            target = self.current_replicas + delta
+            minimum = self.config["min_replicas"]
+            maximum = self.config["max_replicas"]
+            
+            # Enforce limits
+            target = max(minimum, min(maximum, target))
+            
+            # Determine if actual change occurred
+            actual_change = target != self.current_replicas
+            
+            if actual_change:
+                # Update controller state
+                old_replicas = self.current_replicas
+                self.current_replicas = target
+                self.target_replicas = target
+                self.last_scale_time = time.time()
+                self.last_scale_direction = "up" if delta > 0 else "down"
+                
+                # In real K8s mode, call the API here
+                # In simulated mode, log the operation
+                log_entry = {
+                    "timestamp": time.time(),
+                    "event": "scale_operation",
+                    "action": "scale_up" if delta > 0 else "scale_down",
+                    "previous_replicas": old_replicas,
+                    "new_replicas": target,
+                    "succeeded": True,
+                    "mode": "real_k8s" if K8S_AVAILABLE else "simulated",
+                    "deployment_name": self.deployment_name,
+                    "namespace": self.namespace,
+                }
+                self._log_decision(log_entry)
+                
+                # Print status for demonstration
+                print(f"  Scaling: {old_replicas} -> {target} replicas "
+                      f"(delta={delta}, mode={log_entry['mode']})")
+            else:
+                # No change needed but decision was made
+                log_entry = {
+                    "timestamp": time.time(),
+                    "event": "scale_decision_no_change",
+                    "previous_replicas": self.current_replicas,
+                    "new_replicas": self.current_replicas,
+                    "succeeded": True,
+                    "mode": "real_k8s" if K8S_AVAILABLE else "simulated",
+                }
+                self._log_decision(log_entry)
+    
+    def stop(self):
+        """Stop the controller."""
+        self.running = False
+
+
+# ---------------------------------------------------------------------------
+# Simulation Helpers
+# ---------------------------------------------------------------------------
+
+def simulate_workload_transition(controller: EnergyAwareController,
+                                 workloads: List[str] = None,
+                 durations: List[float] = None):
+    """Simulate workload transitions for testing the controller."""
+    if workloads is None:
+        workloads = ["light", "medium", "heavy", "medium", "light"]
+    if durations is None:
+        durations = [10, 15, 20, 15, 10]  # seconds per workload
+    
+    print(f"Simulating workload transition: {workloads}")
+    print(f"Duration per workload: {durations}s")
+    print()
+    
+    for workload, duration in zip(workloads, durations):
+        if not controller.running:
+            break
+        
+        # Simulate metrics for this workload
+        cpu = simulate_cpu_utilization(workload)
+        req_rate = simulate_request_rate(workload)
+        latency = simulate_latency(workload, controller.current_replicas)
+        
+        # Update controller metrics (successful requests proportional to workload)
+        sim_successful = int(5 + (duration / 5) * 10)  # scale with duration
+        controller.update_metrics(cpu, req_rate, latency, successful=sim_successful, failed=0)
+        
+        # Print status
+        status = controller.get_status()
+        print(f"--- {workload.upper()} ---")
+        print(f"  CPU: {status['avg_cpu']}% | Latency: {status['avg_latency_ms']}ms | "
+              f"Replicas: {status['current_replicas']}")
+        print(f"  Energy/req: {status['energy_per_request_estimate']:.3f} J | "
+              f"SLA: {'Y' if status['sla_compliant'] else 'N'}")
+        
+        # Make scaling decision
+        decision = controller.scaling_decision()
+        if decision is not None:
+            print(f"  -> Scaling: {'UP' if decision > 0 else 'DOWN'} by {abs(decision)} replica(s)")
+        
+        # Sleep for the duration (in real time, but scaled)
+        time.sleep(min(duration, 3))  # Cap at 3s for demo
+    
+    print()
+
+
+def simulate_cpu_utilization(workload: str = "medium") -> float:
+    """Simulate CPU utilization based on workload profile."""
+    profiles = {
+        "light": 15.0,
+        "medium": 50.0,
+        "heavy": 85.0
+    }
+    return profiles.get(workload, 50.0)
+
+
+def simulate_request_rate(workload: str = "medium") -> float:
+    """Simulate request rate based on workload profile."""
+    profiles = {
+        "light": 5.0,
+        "medium": 20.0,
+        "heavy": 50.0
+    }
+    return profiles.get(workload, 20.0)
+
+
+def simulate_latency(workload: str = "medium", replicas: int = 1) -> float:
+    """Simulate average latency based on workload and replica count."""
+    base_latencies = {"light": 30, "medium": 100, "heavy": 200}
+    base = base_latencies.get(workload, 100)
+    # More replicas = lower latency (roughly inverse proportion)
+    return max(10, base / max(1, replicas / 2.0))
+
+
+# ---------------------------------------------------------------------------
+# Test Harness
+# ---------------------------------------------------------------------------
+
+def test_controller_comprehensive():
+    """Comprehensive test of the controller with workload transitions."""
+    print("=" * 60)
+    print("Comprehensive Energy-Aware Controller Test")
+    print("=" * 60)
+    
+    # Create controller
+    controller = EnergyAwareController(deployment_name="test-app")
+    
+    # Start monitoring thread
+    controller.start_monitoring()
+    
+    # Simulate workload transitions
+    workloads = ["light", "medium", "heavy", "medium", "light", "medium", "heavy"]
+    
+    for i, workload in enumerate(workloads):
+        if not controller.running:
+            break
+        
+        # Simulate metrics for current workload
+        cpu = simulate_cpu_utilization(workload)
+        req_rate = simulate_request_rate(workload)
+        latency = simulate_latency(workload, max(1, controller.current_replicas))
+        
+        # Update controller metrics
+        sim_successful = 10  # constant for simplicity
+        controller.update_metrics(cpu, req_rate, latency, successful=sim_successful, failed=0)
+        
+        # Print status
+        status = controller.get_status()
+        print(f"\n--- Step {i+1}: Workload={workload.upper()} ---")
+        print(f"  CPU: {status['avg_cpu']}% | Latency: {status['avg_latency_ms']}ms | "
+              f"Replicas: {status['current_replicas']}")
+        print(f"  Energy/req: {status['energy_per_request_estimate']:.3f} J | "
+              f"SLA Compliant: {status['sla_compliant']}")
+        print(f"  SLA Rate: {status['sla_compliance_rate']}% ({status['sla_compliant_checks']}/{status['sla_check_count']})")
+        print(f"  Decision: {status['last_scale_direction']} "
+              f"({status['time_since_last_scale']}s ago)")
+        
+        # Make scaling decision
+        decision = controller.scaling_decision()
+        if decision is not None:
+            print(f"  -> Scaling decision: {'UP' if decision > 0 else 'DOWN'} by {abs(decision)} replica(s)")
+        
+        # Small sleep to let the loop process
+        import time
+        time.sleep(0.5)
+    
+    # Print final comprehensive status
+    final = controller.get_status()
+    print(f"\n--- Final Comprehensive Status ---")
+    for key, value in final.items():
+        print(f"  {key}: {value}")
+    
+    # Print decision log summary
+    print(f"\n--- Scaling Decision Summary ---")
+    if final['scaling_decision_count'] > 0:
+        up_count = sum(1 for d in final.get('decision_log', []) 
+                      if d.get('decision') == 'scale_up')
+        down_count = sum(1 for d in final.get('decision_log', []) 
+                        if d.get('decision') == 'scale_down')
+        no_change_count = final['scaling_decision_count'] - up_count - down_count
+        print(f"  Total decisions: {final['scaling_decision_count']}")
+        print(f"  Scale-ups: {up_count}")
+        print(f"  Scale-downs: {down_count}")
+        print(f"  No changes: {no_change_count}")
+        
+        # Reasons analysis
+        all_reasons = []
+        for d in final.get('decision_log', []):
+            all_reasons.extend(d.get('reasons', []))
+        
+        reason_counts = {}
+        for r in all_reasons:
+            reason_counts[r] = reason_counts.get(r, 0) + 1
+        
+        print(f"  Top reasons: {sorted(reason_counts.items(), key=lambda x: x[1], reverse=True)[:5]}")
+    else:
+        print("  No scaling decisions recorded")
+    
+    # Stop monitoring
+    controller.stop()
+    
+    print("\n" + "=" * 60)
+    print("Comprehensive test complete")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    test_controller_comprehensive()

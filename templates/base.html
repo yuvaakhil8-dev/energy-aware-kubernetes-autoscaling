@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Energy-Aware Autoscaling{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <span class="brand-mark">EA</span>
+        <div>
+          <div class="brand-title">Energy-Aware</div>
+          <div class="brand-sub">Autoscaling Lab</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        {% set nav_items = [
+          ('overview', 'Overview', '/'),
+          ('comparison', 'Autoscaling Comparison', '/autoscaling-comparison'),
+          ('energy', 'Energy Analysis', '/energy-analysis'),
+          ('performance', 'Performance Analysis', '/performance-analysis'),
+          ('explorer', 'Experiment Explorer', '/experiment-explorer'),
+          ('methodology', 'Research Methodology', '/research-methodology')
+        ] %}
+        {% for key, label, href in nav_items %}
+          <a class="nav-link {% if active == key %}active{% endif %}" href="{{ href }}">{{ label }}</a>
+        {% endfor %}
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="pill">Simulation-based</div>
+        <p>Energy values are model estimates, not hardware measurements.</p>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="Toggle navigation">☰</button>
+        <div>
+          <h1 class="page-title">{% block heading %}Overview{% endblock %}</h1>
+          <p class="page-sub">{% block subheading %}Energy-Aware Autoscaling Framework for Sustainable Kubernetes Cloud Environments{% endblock %}</p>
+        </div>
+        <div class="topbar-meta">
+          <span class="dot"></span>
+          <span id="liveClock">{{ now if now else '' }}</span>
+        </div>
+      </header>
+
+      <main class="content">
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="footer">
+        Dataset: <strong>{{ summary.file if summary is defined and summary else 'unavailable' }}</strong>
+        · {{ stats.total_experiments if stats is defined and stats else 0 }} records
+        · Energy model: P = 30 + 50·CPU/100 (estimated)
+      </footer>
+    </div>
+  </div>
+
+  <div id="chartFallback" class="chart-fallback" hidden>
+    Chart library could not be loaded (offline or blocked CDN). Tables and metrics below remain fully usable.
+  </div>
+
+  <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
+</body>
+</html>

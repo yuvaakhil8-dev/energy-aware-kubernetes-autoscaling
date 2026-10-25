@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Energy Analysis{% endblock %}
+{% block heading %}Energy Analysis{% endblock %}
+{% block subheading %}Model-estimated energy per request — not physical hardware measurements{% endblock %}
+
+{% block content %}
+<section class="panel callout">
+  <h2>Measurement disclaimer</h2>
+  <p>
+    Energy figures on this page are <strong>estimates</strong> produced by the CPU-utilisation model
+    <code>P = P_idle + (P_max − P_idle) · CPU/100</code> with <code>P_idle = 30 W</code>,
+    <code>P_max = 80 W</code>, interval <code>Δt = 15 s</code> and
+    <code>E_req = P · Δt / N_req</code>. They are <strong>not</strong> direct power-meter readings.
+    No claim of measured electrical savings is made.
+  </p>
+</section>
+
+<section class="cards">
+  {% for workload in workloads %}
+    {% set r = reduction[workload] %}
+    <div class="card">
+      <div class="card-label">{{ workload|capitalize }} workload</div>
+      <div class="card-value">
+        {% if r is none %}—{% else %}{{ r }}%{% endif %}
+      </div>
+      <div class="card-foot">
+        {% if r is none %}insufficient data{% elif r > 0 %}EAES lower than Static{% else %}EAES higher than Static{% endif %}
+      </div>
+    </div>
+  {% endfor %}
+  <div class="card">
+    <div class="card-label">Energy model</div>
+    <div class="card-value">est.</div>
+    <div class="card-foot">CPU-based estimate</div>
+  </div>
+</section>
+
+<section class="grid two">
+  <div class="panel">
+    <h2>Estimated energy per request</h2>
+    <p class="panel-sub">Joules per request by strategy and workload (estimated).</p>
+    <div class="chart-wrap"><canvas id="energyChart"></canvas></div>
+  </div>
+  <div class="panel">
+    <h2>Average CPU utilisation</h2>
+    <p class="panel-sub">Percent — the driver of the energy estimate.</p>
+    <div class="chart-wrap"><canvas id="cpuChart"></canvas></div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Energy table</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Strategy</th><th>Workload</th><th>Avg energy/req (J, est.)</th><th>Avg CPU %</th><th>Records</th></tr>
+      </thead>
+      <tbody>
+      {% for strategy in strategies %}
+        {% for workload in workloads %}
+          {% set cell = matrix[strategy][workload] %}
+          <tr>
+            <td><span class="tag tag-{{ strategy }}">{{ strategy_labels[strategy] }}</span></td>
+            <td>{{ workload }}</td>
+            <td>{{ cell.avg_energy if cell.avg_energy is not none else '—' }}</td>
+            <td>{{ cell.avg_cpu if cell.avg_cpu is not none else '—' }}</td>
+            <td>{{ cell.count }}</td>
+          </tr>
+        {% endfor %}
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Scientific interpretation</h2>
+  <p>
+    In the current 27-record local dataset, EAES does <strong>not</strong> show lower energy per request than
+    Static or HPA in several cells. This is recorded honestly rather than adjusted. The dataset was generated
+    under different throughput assumptions per strategy, so the energy-per-request values are
+    <strong>not directly comparable across strategies</strong> without re-running the experiment with a
+    normalised request count. Treat the figures as an illustration of the model, not as evidence of savings.
+  </p>
+</section>
+
+<script id="chartData" type="application/json">{{ chart_data|tojson }}</script>
+{% endblock %}

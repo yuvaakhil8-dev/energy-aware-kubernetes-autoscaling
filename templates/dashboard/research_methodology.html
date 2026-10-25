@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Research Methodology{% endblock %}
+{% block heading %}Research Methodology{% endblock %}
+{% block subheading %}Problem, architecture, strategies, energy model and experimental design{% endblock %}
+
+{% block content %}
+<section class="grid two">
+  <div class="panel">
+    <h2>Problem statement</h2>
+    <p>
+      Kubernetes autoscaling (HPA) reacts to CPU utilisation but does not directly account for the energy cost of
+      idle or over-provisioned replicas. This project studies whether an energy-aware elastic scaling policy
+      (EAES) can reduce estimated energy per request while preserving service-level objectives.
+    </p>
+    <h3>Objectives</h3>
+    <ul class="list">
+      <li>Implement three scaling strategies under identical simulated workloads.</li>
+      <li>Estimate energy from CPU utilisation using a documented, reproducible model.</li>
+      <li>Compare energy, latency, replica count and SLA outcomes.</li>
+      <li>Report limitations honestly, separating simulation from measurement.</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>System architecture</h2>
+    <pre class="diagram">Workload generator
+       │
+       ▼
+Flask microservice  ──► /metrics (Prometheus text)
+       │                     │
+       │                     ▼
+       │             Autoscaling controller
+       │             ├─ Static (fixed replicas)
+       │             ├─ HPA-style (CPU thresholds)
+       │             └─ EAES (CPU + energy + SLA)
+       ▼
+Experiment runner ──► experiment_results_v2.json (27 records)
+       │
+       ▼
+Flask dashboard (server-rendered + Chart.js)</pre>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Autoscaling strategies</h2>
+  <div class="grid three">
+    <div class="mini">
+      <h3>Static</h3>
+      <p>Fixed replica count. Serves as the deterministic baseline; does not adapt to load.</p>
+    </div>
+    <div class="mini">
+      <h3>HPA-style</h3>
+      <p>Scale up at 80% CPU, scale down at 30%, with 5% hysteresis and a cooldown. Mirrors Kubernetes HPA feedback control.</p>
+    </div>
+    <div class="mini">
+      <h3>EAES</h3>
+      <p>SLA-first controller. Scales up on latency violation or sustained high CPU; scales down only under sustained low CPU with SLA compliant and energy above target.</p>
+    </div>
+  </div>
+</section>
+
+<section class="grid two">
+  <div class="panel">
+    <h2>Energy model</h2>
+    <p><code>P(util) = P_idle + (P_max − P_idle) · util / 100</code></p>
+    <p><code>E_req = P · Δt / N_req</code></p>
+    <ul class="list">
+      <li><strong>P_idle</strong> = 30 W (estimated)</li>
+      <li><strong>P_max</strong> = 80 W (estimated)</li>
+      <li><strong>Δt</strong> = 15 s metric interval</li>
+      <li><strong>N_req</strong> = successful requests in the interval</li>
+      <li>Units: power in W, energy in J, energy per request in J/request</li>
+    </ul>
+    <p class="warn">These coefficients are illustrative estimates, not calibrated hardware measurements.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Experimental design</h2>
+    <div class="kv-grid">
+      <div><span>Strategies</span><strong>{{ stats.strategies }}</strong></div>
+      <div><span>Workloads</span><strong>{{ stats.workloads }}</strong></div>
+      <div><span>Repetitions</span><strong>3</strong></div>
+      <div><span>Expected records</span><strong>{{ summary.expected }}</strong></div>
+      <div><span>Loaded records</span><strong>{{ stats.total_experiments }}</strong></div>
+      <div><span>Dataset</span><strong>{{ summary.file or '—' }}</strong></div>
+    </div>
+    <p class="panel-sub">Workload profiles: light (15% CPU, 5 req/s), medium (50%, 20 req/s), heavy (85%, 50 req/s).</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Assumptions and limitations</h2>
+  <ul class="list">
+    <li>CPU utilisation is simulated; no live Kubernetes cluster is used in the local run.</li>
+    <li>Energy is model-estimated from CPU, not measured with a power meter.</li>
+    <li>Repetitions in the current dataset contain identical values, so variance and confidence intervals cannot be computed.</li>
+    <li>Throughput is not stored per record, so energy-per-request cannot be independently recomputed from the file.</li>
+    <li>Docker Desktop / Kubernetes runtime validation was blocked by a WSL2 error in this environment.</li>
+  </ul>
+</section>
+{% endblock %}
