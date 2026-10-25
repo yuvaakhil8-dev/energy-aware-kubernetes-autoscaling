@@ -1,0 +1,16 @@
+# Node-level energy model. These are modelling assumptions, not measurements.
+# P_node(u) = P_idle + (P_max - P_idle) * u   [W], u in [0, 1]
+default_scenario: nominal
+pue: 1.2
+node_startup_energy_j: 0.0
+pue_sensitivity: [1.0, 1.2, 1.4, 1.6]
+scenarios:
+  low:
+    p_idle_w: 80.0
+    p_max_w: 300.0
+  nominal:
+    p_idle_w: 150.0
+    p_max_w: 500.0
+  high:
+    p_idle_w: 250.0
+    p_max_w: 800.0

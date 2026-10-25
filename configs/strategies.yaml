@@ -1,0 +1,45 @@
+# Strategy parameters. All controllers use the same backend and trace.
+static:
+  replicas: 3
+
+cpu_threshold:
+  # Legacy 80/30 rule retained for continuity. Not Kubernetes HPA.
+  scale_up: 0.80
+  scale_down: 0.30
+  hysteresis: 0.05
+  min_replicas: 1
+  max_replicas: 10
+  up_cooldown_s: 30
+  down_cooldown_s: 60
+
+hpa_formula:
+  # Kubernetes HPA replica formula, simulated. Not a cluster HPA object.
+  target_cpu: 0.50
+  tolerance: 0.10
+  min_replicas: 1
+  max_replicas: 10
+  scale_down_stabilization_s: 300
+
+eaes:
+  min_replicas: 1
+  max_replicas: 10
+  cooldown_s: 30
+  stabilization_s: 60
+  min_dwell_s: 30
+  margin_threshold: 0.10
+  oscillation_window_s: 120
+  max_scale_step: 10
+
+forecasting_eaes:
+  min_replicas: 1
+  max_replicas: 10
+  cooldown_s: 30
+  stabilization_s: 60
+  min_dwell_s: 30
+  margin_threshold: 0.10
+  oscillation_window_s: 120
+  max_scale_step: 10
+  forecast:
+    method: holt
+    alpha: 0.50
+    beta: 0.30

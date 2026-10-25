@@ -1,0 +1,4 @@
+# Service-level objective used by the EAES guard and the analysis.
+latency_sla_ms: 500.0
+utilization_ceiling: 0.8
+margin_threshold: 0.1

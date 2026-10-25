@@ -1,0 +1,24 @@
+# Experiment design (YAML 1.2 / parsed with PyYAML).
+experiment_id: v3_paired
+duration_s: 300
+control_interval_s: 5
+warmup_s: 30
+seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+workloads:
+  - steady
+  - light
+  - medium
+  - heavy
+  - variable
+  - bursty
+strategies:
+  - static
+  - cpu_threshold
+  - hpa_formula
+  - eaes
+  - forecasting_eaes
+trace_dir: traces
+results_dir: results
+bootstrap_resamples: 5000
+bootstrap_seed: 12345
+forecast_eval_fraction: 0.5

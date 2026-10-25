@@ -1,0 +1,11 @@
+# Simulated cluster assumptions. Documented in METHODOLOGY.md.
+pods_per_node: 4
+pod_capacity_rps: 10.0
+control_interval_s: 5
+startup_delay_s: 10
+initial_replicas: 3
+min_replicas: 1
+max_replicas: 10
+max_nodes: 10
+base_latency_ms: 20.0
+max_queue_factor: 2.0
