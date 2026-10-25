@@ -1,0 +1,142 @@
+{
+  "avg_latency_ms": 16.227418211978424,
+  "avg_node_cpu_percent": 3.1818181818181817,
+  "avg_ready_replicas": 4,
+  "deployment": "energy-aware-app",
+  "drop_rate": 0.0,
+  "duration_s": 60.01499999999942,
+  "execution_mode": "kubernetes_validation",
+  "failed_requests": 0,
+  "final_state": {
+    "available": 4,
+    "ready": 4,
+    "spec": 4
+  },
+  "initial_state": {
+    "available": 4,
+    "ready": 4,
+    "spec": 4
+  },
+  "max_node_cpu_percent": 4.0,
+  "max_ready_replicas": 4,
+  "mode": "hpa",
+  "modelled_energy_j": 11020.173429965973,
+  "modelled_energy_per_served_request_j": 2.2806650310360044,
+  "namespace": "energy-aware-dev",
+  "notes": [
+    "Replica counts and request outcomes are real Kubernetes observations.",
+    "Energy is modelled from measured node CPU, not measured power.",
+    "This run is not part of the paired simulation experiment."
+  ],
+  "offered_requests": 4832,
+  "p50_latency_ms": 13.361049997911323,
+  "p95_latency_ms": 30.394684999919264,
+  "p99_latency_ms": 34.60557200160099,
+  "repetition": 1,
+  "samples": [
+    {
+      "elapsed_s": 0.6997790336608887,
+      "node_count": 1,
+      "node_cpu_percent": 4.0,
+      "pod_cpu_millicores": 160.0,
+      "replicas_available": 4,
+      "replicas_ready": 4,
+      "replicas_spec": 4
+    },
+    {
+      "elapsed_s": 6.39309287071228,
+      "node_count": 1,
+      "node_cpu_percent": 4.0,
+      "pod_cpu_millicores": 160.0,
+      "replicas_available": 4,
+      "replicas_ready": 4,
+      "replicas_spec": 4
+    },
+    {
+      "elapsed_s": 12.101571798324585,
+      "node_count": 1,
+      "node_cpu_percent": 3.0,
+      "pod_cpu_millicores": 163.0,
+      "replicas_available": 4,
+      "replicas_ready": 4,
+      "replicas_spec": 4
+    },
+    {
+      "elapsed_s": 17.889343738555908,
+      "node_count": 1,
+      "node_cpu_percent": 3.0,
+      "pod_cpu_millicores": 163.0,
+      "replicas_available": 4,
+      "replicas_ready": 4,
+      "replicas_spec": 4
+    },
+    {
+      "elapsed_s": 23.67108178138733,
+      "node_count": 1,
+      "node_cpu_percent": 3.0,
+      "pod_cpu_millicores": 163.0,
+      "replicas_available": 4,
+      "replicas_ready": 4,
+      "replicas_spec": 4
+    },
+    {
+      "elapsed_s": 29.324115991592407,
+      "node_count": 1,
+      "node_cpu_percent": 3.0,
+      "pod_cpu_millicores": 163.0,
+      "replicas_available": 4,
+      "replicas_ready": 4,
+      "replicas_spec": 4
+    },
+    {
+      "elapsed_s": 34.97627067565918,
+      "node_count": 1,
+      "node_cpu_percent": 3.0,
+      "pod_cpu_millicores": 163.0,
+      "replicas_available": 4,
+      "replicas_ready": 4,
+      "replicas_spec": 4
+    },
+    {
+      "elapsed_s": 40.6862907409668,
+      "node_count": 1,
+      "node_cpu_percent": 3.0,
+      "pod_cpu_millicores": 163.0,
+      "replicas_available": 4,
+      "replicas_ready": 4,
+      "replicas_spec": 4
+    },
+    {
+      "elapsed_s": 46.323954582214355,
+      "node_count": 1,
+      "node_cpu_percent": 3.0,
+      "pod_cpu_millicores": 163.0,
+      "replicas_available": 4,
+      "replicas_ready": 4,
+      "replicas_spec": 4
+    },
+    {
+      "elapsed_s": 51.987131118774414,
+      "node_count": 1,
+      "node_cpu_percent": 3.0,
+      "pod_cpu_millicores": 163.0,
+      "replicas_available": 4,
+      "replicas_ready": 4,
+      "replicas_spec": 4
+    },
+    {
+      "elapsed_s": 57.66907238960266,
+      "node_count": 1,
+      "node_cpu_percent": 3.0,
+      "pod_cpu_millicores": 163.0,
+      "replicas_available": 4,
+      "replicas_ready": 4,
+      "replicas_spec": 4
+    }
+  ],
+  "seed": 1101,
+  "served_requests": 4832,
+  "service_url": "http://127.0.0.1:5001",
+  "target_rate_rps": 80.0,
+  "throughput_rps": 80.5132050320761
+}

@@ -10,8 +10,9 @@ python -c "from eaes.config import load_configs; c=load_configs(); print('config
 Write-Host "=== 2. Paired simulation (6 workloads x 10 seeds x 5 strategies) ==="
 python -m experiments.run_v3
 
-Write-Host "=== 3. Statistical analysis and tables ==="
+Write-Host "=== 3. Statistical analysis, tables, and EAES diagnostic ==="
 python -m analysis.analyze
+python -m analysis.diagnose
 
 Write-Host "=== 4. Test suite ==="
 python -m pytest -q

@@ -1,0 +1,23 @@
+{
+  "deployment": "energy-aware-app",
+  "docker_version": "29.8.2",
+  "duration_s": 60.0,
+  "ended_at": "2026-10-25T21:50:14.664095+00:00",
+  "energy_scenario": "nominal",
+  "execution_mode": "kubernetes_validation",
+  "git_commit": "cce700b639cb5059a9a01842358513f03ef81267",
+  "kubectl_version": "Client Version: v1.36.1\nKustomize Version: v5.8.1",
+  "minikube_version": "minikube version: v1.39.0\ncommit: 7a9f6a841470a207de8cf4bafcccee0969d8ba10",
+  "namespace": "energy-aware-dev",
+  "node": "NAME       STATUS   ROLES           AGE   VERSION   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE                         KERNEL-VERSION                              CONTAINER-RUNTIME\nminikube   Ready    control-plane   19m   v1.37.0   192.168.49.2   <none>        Debian GNU/Linux 12 (bookworm)   6.18.54.1-microsoft-standard-WSL2 (amd64)   containerd://2.3.4",
+  "notes": [
+    "This is a real Minikube/Docker cluster validation, not the paired simulation.",
+    "The native Kubernetes HPA controls the hpa mode; the static mode has HPA deleted.",
+    "Replica counts and request outcomes are real; energy is modelled from measured node CPU."
+  ],
+  "pue": 1.2,
+  "repetitions": 3,
+  "service_url": "http://127.0.0.1:5001",
+  "started_at": "2026-10-25T21:42:56.206732+00:00",
+  "target_rate_rps": 80.0
+}

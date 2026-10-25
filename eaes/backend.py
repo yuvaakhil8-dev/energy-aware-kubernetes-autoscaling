@@ -1,12 +1,22 @@
 """Cluster backend abstraction and the discrete-time simulated cluster.
 
-The controller talks only to this interface.  The Kubernetes implementation is
-an explicit stub; no cluster result can be produced by importing it.
+The controller talks only to this interface.  ``SimulatedCluster`` is used for
+the confirmatory paired experiment.  ``KubernetesCluster`` is a separate,
+explicitly labelled validation backend that shells out to a verified ``kubectl``
+context; it never silently substitutes simulated data for a deployment.
 """
 from __future__ import annotations
 
+import json
 import math
+import os
+import shutil
+import subprocess
+import time
+import urllib.error
+import urllib.request
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List
 
 from .energy import EnergyModel
@@ -275,32 +285,233 @@ class SimulatedCluster(ClusterBackend):
         }
 
 
-class KubernetesCluster(ClusterBackend):
-    """Explicit stub for the cluster backend.
+def parse_cpu_millicores(value: str) -> float:
+    """Parse ``kubectl top`` CPU strings such as ``12m`` or ``1``."""
+    text = (value or "").strip()
+    if not text:
+        return 0.0
+    if text.endswith("m"):
+        return float(text[:-1])
+    if text.endswith("n"):
+        return float(text[:-1]) / 1_000_000.0
+    if text.endswith("u"):
+        return float(text[:-1]) / 1_000.0
+    return float(text) * 1000.0
 
-    A real implementation is attempted only in Phase 7 after WSL2, Docker,
-    kubectl, and a cluster are independently verified.  Construction always
-    fails so that a caller cannot accidentally present simulated data as a
-    deployment.
+
+class KubernetesCluster(ClusterBackend):
+    """Validation-only backend that talks to a verified kubectl context.
+
+    It is not used for the paired confirmatory experiment.  Replica readings and
+    request outcomes are real; any energy derived from CPU is still a model
+    estimate and must be labelled as such.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        raise NotImplementedError(
-            "KubernetesCluster is a stub. No verified cluster is configured; "
-            "use SimulatedCluster for simulation and see LIMITATIONS.md."
+    execution_mode = "kubernetes_validation"
+
+    def __init__(
+        self,
+        namespace: str = "energy-aware-dev",
+        deployment: str = "energy-aware-app",
+        service_url: str | None = None,
+        kubectl: str | None = None,
+        pod_capacity_rps: float = 10.0,
+        cpu_request_millicores: float = 100.0,
+        label_selector: str = "app=energy-aware-app",
+        request_timeout_s: float = 10.0,
+    ):
+        self.namespace = namespace
+        self.deployment = deployment
+        self.service_url = service_url.rstrip("/") if service_url else None
+        self.kubectl = kubectl or os.environ.get("KUBECTL", "kubectl")
+        if shutil.which(self.kubectl) is None:
+            raise RuntimeError(
+                f"kubectl executable not found: {self.kubectl!r}. "
+                "Install/configure kubectl before using KubernetesCluster."
+            )
+        self.pod_capacity_rps = float(pod_capacity_rps)
+        self.cpu_request_millicores = float(cpu_request_millicores)
+        self.label_selector = label_selector
+        self.request_timeout_s = float(request_timeout_s)
+        self.cum_offered = 0
+        self.cum_served = 0
+        self.cum_dropped = 0
+        self.last_metrics: Dict[str, Any] = {
+            "cpu_util": None,
+            "served": 0,
+            "dropped": 0,
+            "avg_latency_ms": None,
+            "p95_latency_ms": None,
+        }
+
+    # -- kubectl helpers -------------------------------------------------
+    def _run(self, args: List[str], timeout: float = 30.0) -> str:
+        command = [self.kubectl] + args
+        try:
+            proc = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise RuntimeError(f"kubectl failed to execute: {exc}") from exc
+        if proc.returncode != 0:
+            raise RuntimeError(
+                "kubectl command failed: "
+                + " ".join(command)
+                + "\n"
+                + (proc.stderr or proc.stdout)
+            )
+        return proc.stdout.strip()
+
+    def _deployment_json(self) -> Dict[str, Any]:
+        raw = self._run(
+            ["get", "deployment", self.deployment, "-n", self.namespace, "-o", "json"]
+        )
+        return json.loads(raw)
+
+    def _pod_cpu_millicores(self) -> float | None:
+        try:
+            raw = self._run(
+                [
+                    "top",
+                    "pods",
+                    "-n",
+                    self.namespace,
+                    "-l",
+                    self.label_selector,
+                    "--no-headers",
+                ],
+                timeout=20.0,
+            )
+        except RuntimeError:
+            return None
+        total = 0.0
+        for line in raw.splitlines():
+            parts = line.split()
+            if len(parts) >= 2:
+                total += parse_cpu_millicores(parts[1])
+        return total
+
+    def _node_count(self) -> int:
+        try:
+            raw = self._run(["get", "nodes", "--no-headers"], timeout=20.0)
+        except RuntimeError:
+            return 0
+        return len([line for line in raw.splitlines() if line.strip()])
+
+    # -- interface -------------------------------------------------------
+    def get_replicas(self) -> int:
+        raw = self._run(
+            [
+                "get",
+                "deployment",
+                self.deployment,
+                "-n",
+                self.namespace,
+                "-o",
+                "jsonpath={.status.readyReplicas}",
+            ],
+            timeout=20.0,
+        )
+        return int(raw) if raw.strip() else 0
+
+    def set_replicas(self, n: int) -> None:
+        n = max(0, int(n))
+        self._run(
+            [
+                "scale",
+                "deployment",
+                self.deployment,
+                "-n",
+                self.namespace,
+                f"--replicas={n}",
+            ],
+            timeout=30.0,
         )
 
-    def get_replicas(self) -> int:  # pragma: no cover
-        raise NotImplementedError
+    def get_metrics(self, t: float) -> Dict[str, Any]:
+        payload = self._deployment_json()
+        spec_replicas = int(payload.get("spec", {}).get("replicas", 0) or 0)
+        status = payload.get("status", {})
+        ready = int(status.get("readyReplicas", 0) or 0)
+        pod_cpu = self._pod_cpu_millicores()
+        cpu_util = None
+        if pod_cpu is not None and ready > 0 and self.cpu_request_millicores > 0:
+            cpu_util = pod_cpu / (ready * self.cpu_request_millicores)
+            cpu_util = max(0.0, min(1.0, cpu_util))
+        return {
+            "t": float(t),
+            "ready_replicas": ready,
+            "desired_replicas": spec_replicas,
+            "pending_replicas": max(0, spec_replicas - ready),
+            "active_nodes": self._node_count(),
+            "capacity_rps": ready * self.pod_capacity_rps,
+            "backlog_requests": 0.0,
+            "cpu_util": cpu_util,
+            "last_served": int(self.last_metrics["served"]),
+            "last_dropped": int(self.last_metrics["dropped"]),
+            "last_latency_ms": self.last_metrics["avg_latency_ms"],
+            "pod_cpu_millicores": pod_cpu,
+        }
 
-    def set_replicas(self, n: int) -> None:  # pragma: no cover
-        raise NotImplementedError
+    def apply_arrivals(self, t: float, requests: int) -> Dict[str, Any]:
+        if self.service_url is None:
+            raise RuntimeError("service_url is required to send validation traffic")
+        requests = int(requests)
+        if requests < 0:
+            raise ValueError("requests must be non-negative")
+        url = self.service_url + "/cpu/intensive"
 
-    def get_metrics(self, t: float) -> Dict[str, Any]:  # pragma: no cover
-        raise NotImplementedError
+        def one_request() -> float | None:
+            started = time.perf_counter()
+            try:
+                with urllib.request.urlopen(url, timeout=self.request_timeout_s) as response:
+                    response.read()
+                    ok = 200 <= int(response.status) < 300
+            except (urllib.error.URLError, TimeoutError, OSError):
+                ok = False
+            elapsed_ms = (time.perf_counter() - started) * 1000.0
+            return elapsed_ms if ok else None
 
-    def apply_arrivals(self, t: float, requests: int) -> Dict[str, Any]:  # pragma: no cover
-        raise NotImplementedError
+        with ThreadPoolExecutor(max_workers=min(32, max(1, requests))) as pool:
+            outcomes = list(pool.map(lambda _: one_request(), range(requests)))
+        latencies = [x for x in outcomes if x is not None]
+        served = len(latencies)
+        dropped = requests - served
+        avg_latency = sum(latencies) / len(latencies) if latencies else None
+        p95_latency = None
+        if latencies:
+            ordered = sorted(latencies)
+            p95_latency = ordered[min(len(ordered) - 1, int(0.95 * (len(ordered) - 1)))]
+        self.cum_offered += requests
+        self.cum_served += served
+        self.cum_dropped += dropped
+        self.last_metrics = {
+            "cpu_util": self.last_metrics["cpu_util"],
+            "served": served,
+            "dropped": dropped,
+            "avg_latency_ms": avg_latency,
+            "p95_latency_ms": p95_latency,
+        }
+        return {
+            "offered": requests,
+            "served": served,
+            "dropped": dropped,
+            "backlog_requests": 0.0,
+            "capacity_rps": 0.0,
+            "capacity_requests": None,
+            "cpu_util": self.last_metrics["cpu_util"],
+            "avg_latency_ms": avg_latency,
+            "p95_latency_ms": p95_latency,
+            "active_nodes": 0,
+        }
 
-    def get_served_and_dropped(self) -> Dict[str, int]:  # pragma: no cover
-        raise NotImplementedError
+    def get_served_and_dropped(self) -> Dict[str, int]:
+        return {
+            "offered": self.cum_offered,
+            "served": self.cum_served,
+            "dropped": self.cum_dropped,
+        }

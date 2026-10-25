@@ -3,7 +3,7 @@ import copy
 
 import pytest
 
-from eaes.backend import ClusterBackend, KubernetesCluster, SimulatedCluster
+from eaes.backend import ClusterBackend, KubernetesCluster, SimulatedCluster, parse_cpu_millicores
 from eaes.config import load_configs
 from eaes.energy import EnergyModel, conservation_error
 
@@ -20,8 +20,17 @@ def _backend(initial=1, startup=10):
 def test_backend_implements_interface():
     backend = _backend()
     assert isinstance(backend, ClusterBackend)
-    with pytest.raises(NotImplementedError):
-        KubernetesCluster()
+
+
+def test_kubernetes_backend_requires_kubectl():
+    with pytest.raises(RuntimeError):
+        KubernetesCluster(kubectl="definitely-not-a-real-kubectl-binary")
+
+
+def test_parse_cpu_millicores():
+    assert parse_cpu_millicores("12m") == 12.0
+    assert parse_cpu_millicores("1") == 1000.0
+    assert parse_cpu_millicores("") == 0.0
 
 
 def test_scale_up_is_delayed():
