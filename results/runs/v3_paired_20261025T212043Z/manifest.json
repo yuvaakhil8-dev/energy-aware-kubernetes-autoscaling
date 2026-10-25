@@ -1,0 +1,478 @@
+{
+  "config_hash": "37b2cb2b768b4380535ed3524195ccb97a57536298f6ecf01956429ecf705c92",
+  "config_hashes": {
+    "energy": "a5610d9d76e041bfa809f7ea6516a564dcf08d9239eb19650df3e44f5124ef82",
+    "experiment": "5fe94963d2f709ca7d3cb8fdae62dffcb297ba2a9f45955ba064931310de2171",
+    "simulation": "45b5db75801555a3f054f82619c2cfeb42394f8c0cf8a696353204dcac5d3fc0",
+    "sla": "a7b43f400d8875aed15e575eb7ffcfda87610f02c5c2beaa015aac6707b96fa8",
+    "strategies": "6b3779cf86e27164f4ce325570ef128c6a606f0c01ab2b5b9e5d4eccbab9b5bc"
+  },
+  "ended_at": "2026-10-25T21:20:44.526231+00:00",
+  "energy_scenario": "nominal",
+  "execution_mode": "simulation",
+  "experiment_id": "v3_paired",
+  "git_commit": "e3160d970a6974aece2c4f504594ab2a84aef66b",
+  "n_runs": 300,
+  "notes": "All energy is modelled, not measured. No cluster was used.",
+  "python": {
+    "eaes": "3.0.0",
+    "executable": "C:\\Users\\yuvaa\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+    "flask": "3.1.3",
+    "kubernetes": "unknown",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "pytest": "8.3.3",
+    "python": "3.11.9",
+    "yaml": "6.0.3"
+  },
+  "run_id": "v3_paired_20261025T212043Z",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "started_at": "2026-10-25T21:20:43.103961+00:00",
+  "strategies": [
+    "static",
+    "cpu_threshold",
+    "hpa_formula",
+    "eaes",
+    "forecasting_eaes"
+  ],
+  "trace_index": [
+    {
+      "arrivals": 4553,
+      "seed": 1,
+      "ticks": 60,
+      "trace_hash": "afefebac3ad6316bf3625b52dabad5e3fd4e9a63ffc1a1804a299e0a894d5c33",
+      "workload": "steady"
+    },
+    {
+      "arrivals": 4291,
+      "seed": 2,
+      "ticks": 60,
+      "trace_hash": "7113f751792b7bec5b446f499d9db8433d1612eefb628a028d4092462f317fb9",
+      "workload": "steady"
+    },
+    {
+      "arrivals": 4356,
+      "seed": 3,
+      "ticks": 60,
+      "trace_hash": "2e68c9fdbba79874abf0b6a84675b9cb5fe2c80da33bdfe80df6a5303fae1ba9",
+      "workload": "steady"
+    },
+    {
+      "arrivals": 4491,
+      "seed": 4,
+      "ticks": 60,
+      "trace_hash": "6eec414a98874f7a3c1b166b8960ec09ca766e2cd7ce080182dd8092f827b9c1",
+      "workload": "steady"
+    },
+    {
+      "arrivals": 4519,
+      "seed": 5,
+      "ticks": 60,
+      "trace_hash": "b4fa85db959354efd9ad12817cae4168fee3ed64cd386326cff9fc77720a53b9",
+      "workload": "steady"
+    },
+    {
+      "arrivals": 4515,
+      "seed": 6,
+      "ticks": 60,
+      "trace_hash": "230244d5800a77351ff04dadf9738ebab1b2f174493787ed4cd3d2cef72655b3",
+      "workload": "steady"
+    },
+    {
+      "arrivals": 4479,
+      "seed": 7,
+      "ticks": 60,
+      "trace_hash": "c27eb5492cc1b4cc2a48fd44ea233146319c0dfb795cbc26e3ffc1f87c94be05",
+      "workload": "steady"
+    },
+    {
+      "arrivals": 4657,
+      "seed": 8,
+      "ticks": 60,
+      "trace_hash": "dfb103207d02d3abc9042a80f11ca0633285251ebe5bf1edd2c060226ed347bd",
+      "workload": "steady"
+    },
+    {
+      "arrivals": 4468,
+      "seed": 9,
+      "ticks": 60,
+      "trace_hash": "6b6d4542b0056a302dfb76eb4b00db4893d0a5ece4808f098acd3af384206734",
+      "workload": "steady"
+    },
+    {
+      "arrivals": 4461,
+      "seed": 10,
+      "ticks": 60,
+      "trace_hash": "43e3e2f0fabb94e987ecbfc826d464b0969ba127ed4c5477beb3ef975340a7e2",
+      "workload": "steady"
+    },
+    {
+      "arrivals": 1536,
+      "seed": 1,
+      "ticks": 60,
+      "trace_hash": "eeb26e33db5d283a8e6c1907820eef280d8cf2a8ffc6237a1eb332adb2a6569f",
+      "workload": "light"
+    },
+    {
+      "arrivals": 1513,
+      "seed": 2,
+      "ticks": 60,
+      "trace_hash": "4ed088a508f64406f00ffea6102f8bad3b74fdba1a1e6c232f6f70a2fe14e46b",
+      "workload": "light"
+    },
+    {
+      "arrivals": 1499,
+      "seed": 3,
+      "ticks": 60,
+      "trace_hash": "9f288a868f609873b749ff31d336b3a6e0a738bac0006e565883dd43fa12ca01",
+      "workload": "light"
+    },
+    {
+      "arrivals": 1548,
+      "seed": 4,
+      "ticks": 60,
+      "trace_hash": "9d6b20afdbe5fb09d67d2e6438b2936b3a523b973c4da4a20c324dbee4026322",
+      "workload": "light"
+    },
+    {
+      "arrivals": 1421,
+      "seed": 5,
+      "ticks": 60,
+      "trace_hash": "32d6ccea5fb94ffd49b88ac7e30de2de7924705f9c8bbfd64624376832152993",
+      "workload": "light"
+    },
+    {
+      "arrivals": 1420,
+      "seed": 6,
+      "ticks": 60,
+      "trace_hash": "3c60d24049fb5edbf5381cbb0f9d8e5994668560528410dfd9c350ec8cf8c87d",
+      "workload": "light"
+    },
+    {
+      "arrivals": 1423,
+      "seed": 7,
+      "ticks": 60,
+      "trace_hash": "828daeb13fddc5191e8baa6808b6ae27f82a21680b8fcbbd7ea30872b419bcfd",
+      "workload": "light"
+    },
+    {
+      "arrivals": 1510,
+      "seed": 8,
+      "ticks": 60,
+      "trace_hash": "d032d27ddc68496ae5b9acbfa3c0067acb9fabbde96220b1321372d4382d0689",
+      "workload": "light"
+    },
+    {
+      "arrivals": 1472,
+      "seed": 9,
+      "ticks": 60,
+      "trace_hash": "0616acc5ef9584647cc6a22de87ff3128d01cf41edd4cde3ca76694d3a630151",
+      "workload": "light"
+    },
+    {
+      "arrivals": 1506,
+      "seed": 10,
+      "ticks": 60,
+      "trace_hash": "bbb652ecc0c0d79c7b8c196a5760943b8282122fddea761af71de89d5f70322d",
+      "workload": "light"
+    },
+    {
+      "arrivals": 7558,
+      "seed": 1,
+      "ticks": 60,
+      "trace_hash": "53efe18c237c5f35894e50e4e4890cfe29f2c9ef8b376134c2474a8131f77373",
+      "workload": "medium"
+    },
+    {
+      "arrivals": 7234,
+      "seed": 2,
+      "ticks": 60,
+      "trace_hash": "4e3f6892ec52f3b147a39fce4a8d8f2dccf2e7d4a29a43c1304f51cc5eb6f278",
+      "workload": "medium"
+    },
+    {
+      "arrivals": 7308,
+      "seed": 3,
+      "ticks": 60,
+      "trace_hash": "9f5992ac80f74220adba9bc9422a3058ee5a44f4f1bd06668a37ecf5182b6cb0",
+      "workload": "medium"
+    },
+    {
+      "arrivals": 7485,
+      "seed": 4,
+      "ticks": 60,
+      "trace_hash": "c9da8e5a378c7c193c7d5705bf18b93455b604437c720222bac73ace97a51327",
+      "workload": "medium"
+    },
+    {
+      "arrivals": 7521,
+      "seed": 5,
+      "ticks": 60,
+      "trace_hash": "1f297bbb7c88b5229331a9a017692b133bd67114e2be2b224187f52e1932fd30",
+      "workload": "medium"
+    },
+    {
+      "arrivals": 7520,
+      "seed": 6,
+      "ticks": 60,
+      "trace_hash": "bac4e70f882fb0e6dd6c42f8e99135433db8f8296bb9698694737999546e5c23",
+      "workload": "medium"
+    },
+    {
+      "arrivals": 7476,
+      "seed": 7,
+      "ticks": 60,
+      "trace_hash": "f4703bc42f57a5a785448bce5c9633d1feb96602a0228ed782cc90d0d04b260d",
+      "workload": "medium"
+    },
+    {
+      "arrivals": 7700,
+      "seed": 8,
+      "ticks": 60,
+      "trace_hash": "836265ba5f2922d35206e96b0271b7af16578bbfdfc22f9803a502dd5b3643dd",
+      "workload": "medium"
+    },
+    {
+      "arrivals": 7464,
+      "seed": 9,
+      "ticks": 60,
+      "trace_hash": "60e2d5c8ee7caa830f7b4026810ee11fdf6b05f53695a7f0f727ef33f764adf6",
+      "workload": "medium"
+    },
+    {
+      "arrivals": 7447,
+      "seed": 10,
+      "ticks": 60,
+      "trace_hash": "7e3aa3e82e6d9b5210505021df0bae583fa8f6b73c8ee0c87b8811fabe149e63",
+      "workload": "medium"
+    },
+    {
+      "arrivals": 15087,
+      "seed": 1,
+      "ticks": 60,
+      "trace_hash": "93c986adbe328d52a75ab41024923b872d7474b9c57e57954d7e76ee22891e49",
+      "workload": "heavy"
+    },
+    {
+      "arrivals": 14622,
+      "seed": 2,
+      "ticks": 60,
+      "trace_hash": "be5d1e5d867aff054e061d5d975f4a6921768a916f5d8dcb88acfe0ceafff7e4",
+      "workload": "heavy"
+    },
+    {
+      "arrivals": 14729,
+      "seed": 3,
+      "ticks": 60,
+      "trace_hash": "a4a054f8e2489f9af26722d655c7b2d509871793854edcafa29726ad9ed914ae",
+      "workload": "heavy"
+    },
+    {
+      "arrivals": 14980,
+      "seed": 4,
+      "ticks": 60,
+      "trace_hash": "1f6149d6efd28c1d5b64c4fca0b15e4a0465267270830eae15fc38b595c3a4d3",
+      "workload": "heavy"
+    },
+    {
+      "arrivals": 15034,
+      "seed": 5,
+      "ticks": 60,
+      "trace_hash": "c6b1ef2aa9ac2eb112fe2b974a4cd37da4ce5faf338ee442939b7d9933244702",
+      "workload": "heavy"
+    },
+    {
+      "arrivals": 15027,
+      "seed": 6,
+      "ticks": 60,
+      "trace_hash": "cdc53fc399055a7540ab15e30586f168f771d8f3f532e0b161f75e391e23ff95",
+      "workload": "heavy"
+    },
+    {
+      "arrivals": 14968,
+      "seed": 7,
+      "ticks": 60,
+      "trace_hash": "dbb85808a94293247c2a1f1505d33625c323d30bb15deedacc2404cabf6881d3",
+      "workload": "heavy"
+    },
+    {
+      "arrivals": 15285,
+      "seed": 8,
+      "ticks": 60,
+      "trace_hash": "10e98ba486496e417a2baf23b5d2e031afafbd123a29a1772578aa0ca62a107f",
+      "workload": "heavy"
+    },
+    {
+      "arrivals": 14948,
+      "seed": 9,
+      "ticks": 60,
+      "trace_hash": "70c023ffeeb7cc2947119a0f4ca7626d1b3960b64d377fd023725f42d78267e9",
+      "workload": "heavy"
+    },
+    {
+      "arrivals": 14926,
+      "seed": 10,
+      "ticks": 60,
+      "trace_hash": "2e7b37483ed0bc3e02af2f17aa9678c532ad5da92ec9946d56036e0ce751c7d1",
+      "workload": "heavy"
+    },
+    {
+      "arrivals": 4794,
+      "seed": 1,
+      "ticks": 60,
+      "trace_hash": "e117505c074b56d6843a2c86cc1d0bcfde2f1c48c175452463c1b6874cf0b3be",
+      "workload": "variable"
+    },
+    {
+      "arrivals": 4853,
+      "seed": 2,
+      "ticks": 60,
+      "trace_hash": "ba82fab37a070c60964f2102e1f021524de3afbd6cc7e96534f5915e2baad101",
+      "workload": "variable"
+    },
+    {
+      "arrivals": 4853,
+      "seed": 3,
+      "ticks": 60,
+      "trace_hash": "2c98deb099f2a56b5e43b5c514686661c745d8cd28885897cf64985d6028ce93",
+      "workload": "variable"
+    },
+    {
+      "arrivals": 4961,
+      "seed": 4,
+      "ticks": 60,
+      "trace_hash": "b1f4f1904589daa64add5b2960881b95a9e9e54c1293e2ecdc9b1380188d50a3",
+      "workload": "variable"
+    },
+    {
+      "arrivals": 4915,
+      "seed": 5,
+      "ticks": 60,
+      "trace_hash": "5b18f93db9a1a87d5e72f59c6617f58aa0fef54ba3397f857346a974306299ec",
+      "workload": "variable"
+    },
+    {
+      "arrivals": 4892,
+      "seed": 6,
+      "ticks": 60,
+      "trace_hash": "4d0d9e1ce66cb619efe0fd60c09625090789cb0fe2219e0b71f57d2e0b6c2a6b",
+      "workload": "variable"
+    },
+    {
+      "arrivals": 4914,
+      "seed": 7,
+      "ticks": 60,
+      "trace_hash": "99dc333f88106ba567f45968ed5612cd5904b407469e72aad533be0144ff751e",
+      "workload": "variable"
+    },
+    {
+      "arrivals": 4971,
+      "seed": 8,
+      "ticks": 60,
+      "trace_hash": "353cafdca094e3eded454bf71c0a2559fdfe0a4ce2b1a705084f2470d4a1cee4",
+      "workload": "variable"
+    },
+    {
+      "arrivals": 4916,
+      "seed": 9,
+      "ticks": 60,
+      "trace_hash": "5fe83c7df32338990c2369b7f2dcefcfde350d18903dc40e1adf16f77db47b93",
+      "workload": "variable"
+    },
+    {
+      "arrivals": 4855,
+      "seed": 10,
+      "ticks": 60,
+      "trace_hash": "32a115f66e9cb34acee9057a0d2ffb0f774b23b911c92919c62a0005ec0de08b",
+      "workload": "variable"
+    },
+    {
+      "arrivals": 8960,
+      "seed": 1,
+      "ticks": 60,
+      "trace_hash": "5507a106faa090af0e0cb7637ea7e7847e5e052f5be8ef0b14ef8a223693ebb1",
+      "workload": "bursty"
+    },
+    {
+      "arrivals": 9076,
+      "seed": 2,
+      "ticks": 60,
+      "trace_hash": "176a646df55a90da0e854844d3938d767cb7a247b4b389b30d12d18de233235e",
+      "workload": "bursty"
+    },
+    {
+      "arrivals": 9053,
+      "seed": 3,
+      "ticks": 60,
+      "trace_hash": "6684ff01572e758cdb9e41f878b5fad4c06a1cb31b5bed986afcb65ef64fa8de",
+      "workload": "bursty"
+    },
+    {
+      "arrivals": 9104,
+      "seed": 4,
+      "ticks": 60,
+      "trace_hash": "b9eeec4cd8055776796cfb0c57b9945349ef1dcc94e6056f7bbcca34e4d84719",
+      "workload": "bursty"
+    },
+    {
+      "arrivals": 8803,
+      "seed": 5,
+      "ticks": 60,
+      "trace_hash": "e115e608d21cf36b6b7a5ef6b59a2af2d6b042052e6117a8be13bbeea9e4c691",
+      "workload": "bursty"
+    },
+    {
+      "arrivals": 8806,
+      "seed": 6,
+      "ticks": 60,
+      "trace_hash": "36483bcb42ea32d70fd494215d2d202450153bb49baddf4b927f2dbea05f3570",
+      "workload": "bursty"
+    },
+    {
+      "arrivals": 8912,
+      "seed": 7,
+      "ticks": 60,
+      "trace_hash": "eafadab9ac8b320934138a2eb5559eba1eebc0021384a041d7e8237c80039b37",
+      "workload": "bursty"
+    },
+    {
+      "arrivals": 9184,
+      "seed": 8,
+      "ticks": 60,
+      "trace_hash": "e6ebf1ec9e0d127f0f928ed870e6b9815631c20eaeaf21e5d3939c1b04257905",
+      "workload": "bursty"
+    },
+    {
+      "arrivals": 8897,
+      "seed": 9,
+      "ticks": 60,
+      "trace_hash": "fd06ec619afef92a41e963beaffa6cad4f1bc84b7f44cbe451784681aebc51df",
+      "workload": "bursty"
+    },
+    {
+      "arrivals": 8895,
+      "seed": 10,
+      "ticks": 60,
+      "trace_hash": "adec31378ac79a8b2ee69eedce948c1900d271cf5fe71d055db8377cb5d043fe",
+      "workload": "bursty"
+    }
+  ],
+  "workloads": [
+    "steady",
+    "light",
+    "medium",
+    "heavy",
+    "variable",
+    "bursty"
+  ]
+}
