@@ -296,12 +296,17 @@ def main() -> int:
     for c in comparisons:
         if c["es_ratio"] is None:
             continue
-        direction = "higher" if c["es_ratio"] > 1 else "lower"
+        if abs(c["es_ratio"] - 1.0) <= 0.005:
+            direction = "equal to"
+        elif c["es_ratio"] > 1:
+            direction = "higher than"
+        else:
+            direction = "lower than"
         denom = "not explained by the denominator"
         if c["es_ratio"] > 1 and c["eo_ratio"] is not None and c["eo_ratio"] <= 1:
             denom = "the served-versus-offered denominator changes the sign"
         findings.append(
-            f"{c['workload']}: EAES energy per served request is {direction} than HPA formula "
+            f"{c['workload']}: EAES energy per served request is {direction} HPA formula "
             f"({c['e_es']:.3f} vs {c['h_es']:.3f} J, ratio {c['es_ratio']:.3f}); "
             f"energy per offered request ratio is {c['eo_ratio']:.3f}; {denom}. "
             f"EAES serves {c['seeds_served_higher']}/{c['n_seeds']} seeds more requests, "
@@ -312,7 +317,8 @@ def main() -> int:
 
     report = {
         "run_id": manifest["run_id"],
-        "git_commit": git_commit(),
+        "run_git_commit": manifest.get("git_commit"),
+        "analysis_git_commit": git_commit(),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "energy_is_modelled": True,
         "comparisons": comparisons,
@@ -330,7 +336,8 @@ def main() -> int:
         "# EAES Diagnostic (generated from raw tick logs)",
         "",
         f"Run: `{manifest['run_id']}`  ",
-        f"Git commit: `{git_commit()}`  ",
+        f"Run git commit: `{manifest.get('git_commit', 'unknown')}`  ",
+        f"Analysis commit: `{git_commit()}`  ",
         f"Execution mode: **{manifest['execution_mode']}**  ",
         "",
         "> All energy is modelled, not measured. The diagnostic looks for evidence "

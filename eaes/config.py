@@ -136,6 +136,21 @@ def git_commit() -> str:
         return "unknown"
 
 
+def git_tracked_dirty() -> bool:
+    """Return whether tracked files differ from HEAD (untracked files ignored)."""
+    try:
+        out = subprocess.check_output(
+            ["git", "status", "--porcelain", "--untracked-files=no"],
+            cwd=APP_DIR,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=10,
+        )
+        return bool(out.strip())
+    except (OSError, subprocess.SubprocessError):
+        return True
+
+
 def package_versions() -> Dict[str, str]:
     versions = {
         "python": platform.python_version(),
