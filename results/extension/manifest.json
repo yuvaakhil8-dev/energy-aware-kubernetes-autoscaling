@@ -1,0 +1,22 @@
+{
+  "confirmatory_run": "v3_paired_20261025T220942Z",
+  "created_at": "2026-10-26T06:01:18.005842+00:00",
+  "extensions": [
+    {
+      "dir": "C:\\Users\\yuvaa\\OneDrive\\Desktop\\Documents\\Default Project\\flask-kubernetes\\results\\extension\\oracle",
+      "n_runs": 360,
+      "name": "oracle"
+    },
+    {
+      "dir": "C:\\Users\\yuvaa\\OneDrive\\Desktop\\Documents\\Default Project\\flask-kubernetes\\results\\extension\\startup_sweep",
+      "n_runs": 360,
+      "name": "startup_sweep"
+    },
+    {
+      "dir": "C:\\Users\\yuvaa\\OneDrive\\Desktop\\Documents\\Default Project\\flask-kubernetes\\results\\extension\\seed30",
+      "n_runs": 600,
+      "name": "seed30"
+    }
+  ],
+  "note": "Extensions are exploratory and never replace the confirmatory results."
+}

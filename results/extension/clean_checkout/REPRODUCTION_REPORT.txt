@@ -1,0 +1,17 @@
+CLEAN-CHECKOUT REPRODUCTION REPORT
+==================================
+
+Status: not yet generated in this working tree.
+
+Run:
+
+    powershell -ExecutionPolicy Bypass -File scripts/clean_checkout_reproduction.ps1
+
+The script clones the current branch into a temporary directory, runs the
+default reproduction and tests, compares committed derived artifacts by
+SHA-256, and overwrites this file with the result. A successful report records
+the clone path, branch, commit, hashes, matches, differences, and exit codes.
+
+This placeholder is committed so documentation references resolve before the
+first clean-checkout run. A "not yet generated" report must not be cited as
+evidence of reproduction.

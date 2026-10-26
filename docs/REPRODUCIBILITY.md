@@ -3,208 +3,158 @@
 ## 1. What can be reproduced
 
 - The 300-run paired simulation from fixed configs and seeds.
-- All descriptive statistics, bootstrap CIs, paired tests, Friedman/Nemenyi tables, forecast evaluation, and sensitivity tables.
+- All descriptive statistics, bootstrap intervals, paired tests,
+  Friedman/Nemenyi tables, forecast evaluation, and sensitivity tables.
 - The raw per-tick logs.
-- The three-page dashboard and legacy API surface.
-- The unit/integration test suite.
-- Optionally, the separate Minikube/HPA validation, if Docker Desktop and Minikube are available.
+- The three-page dashboard and preserved API surface.
+- The 112-test suite.
+- The separate Minikube/HPA validation if Docker Desktop and Minikube are
+  available.
 
-The simulation does **not** require Docker or Kubernetes. The cluster validation does.
+The simulation and analysis do not require Docker or Kubernetes. The cluster
+validation does.
 
-## 2. Repository and environment
-
-```text
-Repository: C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes
-Branch:     research-rebuild
-```
-
-Confirmatory run manifest:
-
-| Field | Value |
-|---|---|
-| `run_id` | `v3_paired_20261025T220942Z` |
-| `git_commit` | `431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea` |
-| `git_tracked_dirty` | `false` |
-| `execution_mode` | `simulation` |
-| `n_runs` | 300 |
-| `energy_scenario` | `nominal` |
-| Python | 3.11.9 |
-| Flask | 3.1.3 |
-| PyYAML | 6.0.3 |
-| pytest | 8.3.3 |
-| OS | Windows-10-10.0.26200-SP0 |
-| `kubernetes` package | broken/unknown; not used by the simulation |
-
-The Docker image uses `python:3.12-slim` and installs the pinned requirements. The local simulation used Python 3.11.9. The simulator is pure Python and has no compiled dependency.
-
-## 3. Fresh-clone quick reproduction
-
-```powershell
-cd "C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes"
-python -m pip install -r requirements.txt
-
-# Full simulation (6 workloads x 10 seeds x 5 strategies, 300 s each)
-python -m experiments.run_v3
-
-# Statistics and tables
-python -m analysis.analyze
-
-# Raw-log EAES diagnostic
-python -m analysis.diagnose
-
-# Tests
-$env:ENERGY_AWARE_NO_BG='1'
-python -m pytest -q
-```
-
-The commands are also wrapped by `reproduce.ps1` (PowerShell) and `reproduce.sh` (POSIX shell).
-
-## 4. Expected artifacts
-
-After `run_v3`:
+## 2. Preserved confirmatory run
 
 ```text
-results/runs/<new_run_id>/manifest.json
-results/runs/<new_run_id>/summary.json
-results/runs/<new_run_id>/<workload>_seed<seed>_<strategy>.jsonl   # 300 files
-results/latest_run.json
+run_id:            v3_paired_20261025T220942Z
+git_commit:        431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea
+git_tracked_dirty: false
+execution_mode:    simulation
+n_runs:            300
+energy_scenario:   nominal
+python:            3.11.9
+Flask:             3.1.3
+PyYAML:            6.0.3
+pytest:            8.3.3
 ```
 
-After `analyze`:
+Do not overwrite `results/runs/v3_paired_20261025T220942Z/`. `-Rerun` creates a
+new run id and updates `results/latest_run.json`; it does not delete the old run.
+
+## 3. Protected input hashes
+
+Verified by `analysis/verify_dataset_hashes.py`:
 
 ```text
-results/RESULTS.md
-results/analysis_manifest.json
-results/tables/descriptive.csv
-results/tables/paired.csv
-results/tables/friedman.csv
-results/tables/nemenyi.csv
-results/tables/forecasting.csv
-results/tables/sensitivity.csv
-results/tables/*.md
+data/experiment_results_v2.json
+6279D01DC92D9C4FBE2EBB2C5BA0C12A7DA3EA7CA985E9FA762E88A11F34234E
+
+data/experiment_results.json
+C4BF4BFFFA8D0242395D2A2FB966C16DBC4884078BE7E82395E778EF87968451
 ```
 
-After `diagnose`:
+The original workspace files are also checked when present. A mismatch is a
+hard failure, not a warning.
 
-```text
-results/EAES_DIAGNOSTIC.md
-results/diagnostic.json
-```
-
-The exact run id changes with the timestamp. The numbers should match for the fixed configs and seed set; the manifest’s config/trace hashes are the check.
-
-## 5. Determinism checks
-
-The confirmatory run’s manifest records:
-
-- per-config SHA-256 hashes;
-- combined config hash;
-- 60 trace hashes in `trace_index`;
-- Python/package versions;
-- git commit and tracked-dirty flag.
-
-To verify a rerun:
+## 4. Default reproduction
 
 ```powershell
-$m = Get-Content results\latest_run.json | ConvertFrom-Json
-$run = Join-Path (Get-Location) $m.run_dir
-Get-Content (Join-Path $run 'manifest.json') | Select-String 'config_hash|trace_hash|git_commit|git_tracked_dirty'
-(Get-Content (Join-Path $run 'summary.json') | ConvertFrom-Json).Count
+.\reproduce.ps1
 ```
 
-A full rerun should produce 300 summaries. The manifest’s config hashes should match `configs/`; the trace hashes should match `traces/index.json`.
+or:
 
-The simulation uses `random.Random(seed)` and deterministic trace files. Reusing an existing trace is deliberate: the trace generator validates the existing file and hashes it rather than overwriting it.
+```bash
+./reproduce.sh
+```
 
-## 6. Original data verification
+Default behavior:
 
-The originals are outside the repository:
+1. check Python and dependencies;
+2. load and validate YAML;
+3. verify protected hashes;
+4. reuse the preserved run;
+5. regenerate `results/RESULTS.md` and `results/tables/headline.csv` /
+   `paired_headline.csv`;
+6. regenerate descriptive and paired tables and the diagnostic;
+7. regenerate forecast-accuracy tables;
+8. regenerate six Pareto SVGs;
+9. replay recorded native-HPA samples;
+10. run the full test suite;
+11. validate documents and references;
+12. print a summary and any working-tree changes.
+
+Expected non-byte-identical outputs after a default run:
+
+- `results/analysis_manifest.json` - `analyzed_at` timestamp and possibly the
+  analysis commit;
+- `results/diagnostic.json` - generation timestamp;
+- extension `manifest.json` files if regenerated - `started_at`/`created_at`.
+
+The clean-checkout comparison excludes the analysis manifest and compares the
+substantive tables, reports, SVGs, and replay outputs.
+
+## 5. Options
 
 ```powershell
-$parent = 'C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project'
-Get-FileHash "$parent\experiment_results_v2.json" -Algorithm SHA256
-Get-FileHash "$parent\experiment_results.json" -Algorithm SHA256
+.\reproduce.ps1 -Rerun        # rerun 300 simulations under a new run id
+.\reproduce.ps1 -Extensions   # regenerate oracle/startup/30-seed/sensitivity
+.\reproduce.ps1 -SkipTests
 ```
 
-Expected:
+`-Extensions` is intentionally optional: it is exploratory and takes longer.
 
-```text
-v2:     6279D01DC92D9C4FBE2EBB2C5BA0C12A7DA3EA7CA985E9FA762E88A11F34234E
-legacy: C4BF4BFFFA8D0242395D2A2FB966C16DBC4884078BE7E82395E778EF87968451
-```
+## 6. Determinism
 
-The tracked copies under `data/` are byte-identical; the test suite checks them.
+- Traces are generated deterministically from workload/seed/config and hashed.
+- Strategies are deterministic; forecasts update online.
+- `hpa_formula` uses a fixed tolerance and stabilization rule.
+- Bootstrap resampling uses fixed stable seeds derived from workload, strategy,
+  baseline, and metric.
+- The run summary preserves the exact git commit and dirty state.
+- Analysis tables are regenerated from the same raw summaries and raw ticks.
 
-## 7. Test command and expected result
+If the tracked tree is dirty when `experiments.run_extensions` runs, its manifests
+will honestly record `git_tracked_dirty: true`. Re-run from a clean tree if you
+need a clean extension manifest. Untracked generated outputs do not count as
+dirty.
+
+## 7. Clean-checkout comparison
 
 ```powershell
-$env:ENERGY_AWARE_NO_BG='1'
-$env:PYTHONIOENCODING='utf-8'
-python -m pytest -q
+.\scripts\clean_checkout_reproduction.ps1
 ```
 
-At the documentation checkpoint this is **91 passed**. The final saved output is `results/test_report.txt`; the earlier phase outputs are `results/test_dashboard.txt`, `results/test_pre_rerun.txt`, `results/test_phase7.txt`, `results/test_phase6.txt`, and `results/test_phase1_4.txt`.
+The script:
 
-`ENERGY_AWARE_NO_BG=1` prevents the app’s background workload thread from starting during tests.
+1. clones the current branch into `%TEMP%` (original tree untouched);
+2. hashes committed derived artifacts;
+3. runs `reproduce.ps1 -SkipTests` in the clone;
+4. runs the test suite in the clone;
+5. re-hashes generated artifacts;
+6. records matches, differences, missing files, git status, and exit codes;
+7. writes `results/extension/clean_checkout/REPRODUCTION_REPORT.txt`.
 
-## 8. Container build
+It exits non-zero on a substantive mismatch or failed test. See
+`docs/verification_log.txt` for the latest run.
 
-```powershell
-minikube image build -t flask-k8s-demo:latest .
-kubectl -n energy-aware-dev rollout restart deployment/energy-aware-app
-kubectl -n energy-aware-dev rollout status deployment/energy-aware-app --timeout=180s
-kubectl port-forward -n energy-aware-dev svc/energy-aware-service 5001:5000
-```
+## 8. Environment notes
 
-On this Windows host, `minikube image build` prints progress to stderr and can return a non-zero shell status even when the final Docker export/naming succeeds. Check the last lines of `results/image_build_final.log` and verify the pod starts before treating the build as failed.
+- The repository is on Windows; paths use `C:\...`.
+- The simulation is standard-library Python plus PyYAML.
+- Chart.js is vendored locally; dashboard charts do not require a CDN.
+- The Python `kubernetes` package is broken locally; the real backend uses
+  `kubectl`.
+- Docker Desktop/Minikube were unavailable at final verification time, so no
+  new cluster repetitions were run.
+- Raw confirmatory JSONL logs are included in the Docker image because the
+  dashboard APIs read them. Cluster per-request logs are excluded.
 
-The final image smoke test is recorded in `docs/DASHBOARD_AND_CONTAINER_VALIDATION.md`.
+## 9. Failure handling
 
-## 9. Real-cluster reproduction
+If a reproduction step fails:
 
-Prerequisites: Docker Desktop Linux engine, Minikube, kubectl, metrics-server. See `docs/CLUSTER_ENVIRONMENT.md`.
+1. read the console output and `results/extension/clean_checkout/*.txt`;
+2. check config hashes and the preserved run manifest;
+3. check protected hashes;
+4. inspect `results/analysis_manifest.json` for the run dir;
+5. re-run with `-SkipTests` to isolate analysis vs tests;
+6. do not hand-edit a generated table to make the comparison pass.
 
-```powershell
-minikube start --driver=docker --cpus=2 --memory=4096
-minikube addons enable metrics-server
-minikube image build -t flask-k8s-demo:latest .
-kubectl apply -f kubernetes/namespace.yaml
-kubectl apply -n energy-aware-dev -f kubernetes/deployment.yaml -f kubernetes/service.yaml
-kubectl rollout status deployment/energy-aware-app -n energy-aware-dev --timeout=180s
-kubectl top nodes
-kubectl port-forward -n energy-aware-dev svc/energy-aware-service 5001:5000
-python -m experiments.run_cluster_validation --repetitions 3 --duration 60 --rate 80
-```
+## 10. What is not reproducible here
 
-This reproduces the real-cluster check, not the confirmatory simulation. The observed replica counts and request outcomes should be broadly similar, but timings and HPA behavior will vary.
-
-## 10. Known non-determinism
-
-- Run ids contain UTC timestamps.
-- Real-cluster CPU, latency, and HPA timing vary.
-- Python version differences can alter floating-point last digits.
-- `kubectl top` values are sampled and can lag.
-- The Flask development server is not a production server.
-- Power models are assumptions, not measurements.
-
-## 11. Commit chain
-
-```text
-431810f analysis: record run/analysis commits and accurate EAES direction wording
-603d1de phase 8: three-page research dashboard, immutable data copies, container packaging
-2e1816f phase 7: real Minikube/HPA validation and kubectl cluster backend
-cce700b phase 6: paired statistics, bootstrap CIs, Holm/Friedman/Nemenyi, sensitivity
-97a99dc phase 5: 10-seed paired experiments, raw logs, and EAES diagnostic
-e3160d9 phase 5: freeze analysis plan before confirmatory diagnostic
-9ca53b5 phase 4: five strategies, forecasting ablation, paired experiment engine
-4d6fda6 phase 3: node-level energy model with attribution and sensitivity scenarios
-```
-
-The baseline snapshot is `c5ec94d` on `pre-rebuild-snapshot`.
-
-## 12. What is not reproducible
-
-- The paywalled full text of Li et al. (2025); only metadata was verified.
-- A physical power measurement.
-- A production multi-node cluster run.
-- The original student project’s unrecorded environment exactly; the preserved code is in Git, but its external data and runtime history are not fully reconstructible.
+- The exact Minikube host VM state (Docker Desktop/WSL kernel).
+- Physical power measurements (none exist).
+- The full text of Li et al. (2025) (paywalled; only metadata verified).
+- A production multi-node cluster.

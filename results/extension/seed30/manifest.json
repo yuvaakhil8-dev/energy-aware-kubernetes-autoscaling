@@ -1,0 +1,71 @@
+{
+  "combined_with_confirmatory_seeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "config_hash": "a509492a46889a17d2cbfd5ab0286fac106b2c5a13c2700af51547ae4e32a219",
+  "config_hashes": {
+    "energy": "a5610d9d76e041bfa809f7ea6516a564dcf08d9239eb19650df3e44f5124ef82",
+    "experiment": "5a938e7d60bedf06291d6a8836fb180e8cbf9c563d09ba9e7fb33d7e2ff0a7f5",
+    "simulation": "45b5db75801555a3f054f82619c2cfeb42394f8c0cf8a696353204dcac5d3fc0",
+    "sla": "a7b43f400d8875aed15e575eb7ffcfda87610f02c5c2beaa015aac6707b96fa8",
+    "strategies": "6b3779cf86e27164f4ce325570ef128c6a606f0c01ab2b5b9e5d4eccbab9b5bc"
+  },
+  "confirmatory_run_unchanged": "v3_paired_20261025T220942Z",
+  "energy_scenario": "nominal",
+  "execution_mode": "simulation",
+  "extension": "seed30",
+  "git_commit": "b986f8821a669c90102742ae268f30e744f258e3",
+  "git_tracked_dirty": false,
+  "label": "exploratory_extension",
+  "n_runs": 600,
+  "notes": "Seeds 11-30, all six workloads and five confirmatory strategies. Extension only; combined with the confirmatory seeds 1-10 this gives 30 seeds.",
+  "python": {
+    "eaes": "3.0.0",
+    "executable": "C:\\Users\\yuvaa\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+    "flask": "3.1.3",
+    "kubernetes": "unknown",
+    "platform": "Windows-10-10.0.26300-SP0",
+    "pytest": "8.3.3",
+    "python": "3.11.9",
+    "yaml": "6.0.3"
+  },
+  "seeds": [
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "started_at": "2026-10-26T05:59:53.243010+00:00",
+  "strategies": [
+    "static",
+    "cpu_threshold",
+    "hpa_formula",
+    "eaes",
+    "forecasting_eaes"
+  ]
+}

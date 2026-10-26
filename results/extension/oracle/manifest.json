@@ -1,0 +1,50 @@
+{
+  "config_hash": "7f5d758f1e06c22839f9275c047bb4f6324a7f29d7278009f063d8ad12731a76",
+  "config_hashes": {
+    "energy": "a5610d9d76e041bfa809f7ea6516a564dcf08d9239eb19650df3e44f5124ef82",
+    "experiment": "5fe94963d2f709ca7d3cb8fdae62dffcb297ba2a9f45955ba064931310de2171",
+    "simulation": "45b5db75801555a3f054f82619c2cfeb42394f8c0cf8a696353204dcac5d3fc0",
+    "sla": "a7b43f400d8875aed15e575eb7ffcfda87610f02c5c2beaa015aac6707b96fa8",
+    "strategies": "652d3b59140772c5bf2b63e0051622d3df4b75a14fa48835f20e21a389c73214"
+  },
+  "confirmatory_run_unchanged": "v3_paired_20261025T220942Z",
+  "energy_scenario": "nominal",
+  "execution_mode": "simulation",
+  "extension": "oracle",
+  "git_commit": "b986f8821a669c90102742ae268f30e744f258e3",
+  "git_tracked_dirty": false,
+  "label": "exploratory_extension",
+  "n_runs": 360,
+  "notes": "Perfect-foresight upper bound. Not a deployable controller and not part of the confirmatory comparison.",
+  "python": {
+    "eaes": "3.0.0",
+    "executable": "C:\\Users\\yuvaa\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+    "flask": "3.1.3",
+    "kubernetes": "unknown",
+    "platform": "Windows-10-10.0.26300-SP0",
+    "pytest": "8.3.3",
+    "python": "3.11.9",
+    "yaml": "6.0.3"
+  },
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "started_at": "2026-10-26T05:59:46.730412+00:00",
+  "strategies": [
+    "static",
+    "cpu_threshold",
+    "hpa_formula",
+    "eaes",
+    "forecasting_eaes",
+    "oracle"
+  ]
+}

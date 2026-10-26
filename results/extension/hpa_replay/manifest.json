@@ -1,0 +1,20 @@
+{
+  "agreement_rate_spec": 1.0,
+  "created_at": "2026-10-26T06:01:27.581649+00:00",
+  "extension": "hpa_replay",
+  "label": "validation_extension",
+  "limitations": [
+    "The sampler starts after the native HPA has reached 4 replicas; the initial 1->4 transition is not observed.",
+    "Samples are roughly 5.7 s apart, not exactly the 5 s simulation interval.",
+    "The HPA formula is replayed with recorded pod CPU divided by the 100m CPU request; no metric is imputed.",
+    "This validates the offline formula against steady-state decisions, not the cluster HPA controller end-to-end."
+  ],
+  "n_transitions": 30,
+  "observed_replica_changes_between_samples": 0,
+  "predicted_replica_changes": 0,
+  "source_files": [
+    "hpa_rep1.json",
+    "hpa_rep2.json",
+    "hpa_rep3.json"
+  ]
+}

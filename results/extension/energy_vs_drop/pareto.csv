@@ -1,0 +1,31 @@
+workload,strategy,strategy_label,energy_per_offered_j,drop_rate,n_seeds,pareto_frontier
+bursty,static,Static,13.226105473834451,0.3803377421792351,10,True
+bursty,cpu_threshold,CPU threshold,22.404147029690893,0.0339294904812308,10,True
+bursty,hpa_formula,HPA formula,30.446717686898623,0.0,10,False
+bursty,eaes,EAES,29.46169459124931,0.0,10,True
+bursty,forecasting_eaes,Forecasting EAES,29.46169459124931,0.0,10,True
+heavy,static,Static,9.93439513259507,0.39791544650938976,10,True
+heavy,cpu_threshold,CPU threshold,17.722137144440502,0.010511253339601246,10,True
+heavy,hpa_formula,HPA formula,21.337521962830984,0.0,10,False
+heavy,eaes,EAES,18.578170033877328,0.0,10,True
+heavy,forecasting_eaes,Forecasting EAES,18.652078208569378,0.0,10,False
+light,static,Static,46.721816865305485,0.0,10,True
+light,cpu_threshold,CPU threshold,46.721816865305485,0.0,10,True
+light,hpa_formula,HPA formula,46.721816865305485,0.0,10,True
+light,eaes,EAES,46.721816865305485,0.0,10,True
+light,forecasting_eaes,Forecasting EAES,46.721816865305485,0.0,10,True
+medium,static,Static,17.736156720280952,0.0,10,True
+medium,cpu_threshold,CPU threshold,17.736156720280952,0.0,10,True
+medium,hpa_formula,HPA formula,32.20847016084286,0.0,10,False
+medium,eaes,EAES,20.96146105363299,0.0,10,False
+medium,forecasting_eaes,Forecasting EAES,21.098031321037126,0.0,10,False
+steady,static,Static,22.577173525235136,0.0,10,True
+steady,cpu_threshold,CPU threshold,22.577173525235136,0.0,10,True
+steady,hpa_formula,HPA formula,30.699875149808474,0.0,10,False
+steady,eaes,EAES,22.577173525235136,0.0,10,True
+steady,forecasting_eaes,Forecasting EAES,22.577173525235136,0.0,10,True
+variable,static,Static,21.869903443445935,0.0,10,True
+variable,cpu_threshold,CPU threshold,21.869903443445935,0.0,10,True
+variable,hpa_formula,HPA formula,44.54677178270183,0.0,10,False
+variable,eaes,EAES,23.022062853737197,0.0,10,False
+variable,forecasting_eaes,Forecasting EAES,26.82995491344388,0.0,10,False

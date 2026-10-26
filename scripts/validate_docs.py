@@ -84,24 +84,33 @@ def _clean_reference(ref: str) -> str:
     return ref
 
 
+def _is_placeholder(ref: str) -> bool:
+    return any(token in ref for token in ("<", ">", "...", "*"))
+
+
 def check_references(rel_doc: str) -> List[str]:
     errors: List[str] = []
     path = os.path.join(APP_DIR, rel_doc)
     if not os.path.isfile(path):
         return errors
+    doc_dir = os.path.dirname(path)
     with open(path, encoding="utf-8") as fh:
         text = fh.read()
-    refs = set()
+    refs = []
     for match in LINK_RE.finditer(text):
         ref = _clean_reference(match.group(1))
         if ref and not re.match(r"^(https?:|mailto:|#)", ref):
-            refs.add(ref)
+            refs.append((ref, doc_dir))
     for match in BACKTICK_RE.finditer(text):
         ref = _clean_reference(match.group(1))
-        if ref.startswith(PATH_PREFIXES) and " " not in ref and "*" not in ref:
-            refs.add(ref)
-    for ref in sorted(refs):
-        candidate = ref if os.path.isabs(ref) else os.path.normpath(os.path.join(APP_DIR, ref))
+        if ref.startswith(PATH_PREFIXES) and " " not in ref:
+            refs.append((ref, APP_DIR))
+    seen = set()
+    for ref, base in refs:
+        if ref in seen or _is_placeholder(ref):
+            continue
+        seen.add(ref)
+        candidate = ref if os.path.isabs(ref) else os.path.normpath(os.path.join(base, ref))
         if not os.path.exists(candidate):
             errors.append(f"{rel_doc}: referenced path does not exist: {ref}")
             continue

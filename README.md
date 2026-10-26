@@ -1,100 +1,183 @@
 # Energy-Aware Autoscaling: Reproducible Research Build
 
-This repository is a research rebuild of a Flask/Kubernetes autoscaling demonstration. It now contains a configurable discrete-time simulation, five explicitly separated scaling strategies, a node-level energy model, paired statistical analysis, a three-page dashboard, and a separate real-Minikube/HPA validation.
+This repository is a research rebuild of a Flask/Kubernetes energy-aware
+autoscaling demonstration. It contains:
 
-**All simulation energy is modelled, not measured.** The real-cluster validation contains real replica counts and request outcomes, but its energy column is also modelled from measured node CPU, not from a power meter.
+- a deterministic discrete-time simulation of a small Kubernetes-like cluster;
+- five separately implemented autoscaling strategies;
+- a node-level energy **model**;
+- paired statistical analysis with seed-level pairing and bootstrap intervals;
+- a three-page dashboard driven by generated backend artifacts;
+- a separate real single-node Minikube / native-HPA validation;
+- exploratory extensions that are reported separately from the confirmatory run.
 
-## Current evidence
+**All simulation energy is modelled, not measured.** The real-cluster validation
+contains real replica counts and request outcomes, but its energy column is also
+modelled from measured node CPU. No power meter or Kepler measurement exists for
+any result in this repository.
+
+## Status at a glance
 
 | Item | Value |
 |---|---|
-| Confirmatory run | `v3_paired_20261025T220942Z` |
-| Execution mode | `simulation` |
-| Design | 6 workloads × 10 seeds × 5 strategies = 300 runs |
+| Confirmatory run | `v3_paired_20261025T220942Z` (preserved; never overwritten) |
+| Design | 6 workloads x 10 seeds x 5 strategies = 300 runs |
 | Simulated duration | 300 s per run, 5 s control interval, 30 s warm-up excluded |
+| Execution mode | `simulation` |
 | Run git commit | `431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea` |
-| Tracked working tree at run | clean (`git_tracked_dirty: false`) |
-| Tests | 91 passing at the documentation checkpoint; see `results/test_report.txt` |
-| Statistically planned α | 0.05, paired by seed, Holm correction |
+| Tracked tree at run | clean (`git_tracked_dirty: false`) |
+| Tests | 112 passing (see `results/test_report.txt`) |
+| Confirmatory inference | paired by workload + seed, 5,000-resample bootstrap, Holm-adjusted Wilcoxon |
 | Real cluster | Single-node Minikube v1.39.0 / Kubernetes v1.37.0, Docker driver |
+| Dashboard | `/`, `/eaes-diagnostics`, `/methodology` |
 
-Key result in one paragraph: in this simulation, EAES has lower energy per served request than the simulated HPA formula in steady, medium, heavy, variable, and bursty workloads, and equal energy in the light workload. It also provisions fewer replica-hours. The advantage is not free: reactive EAES has SLA violations on the variable workload (mean `0.0119`) and bursty workload (mean `0.0170`) while the HPA formula has none, and the forecasting variant removes the variable-workload violations at a higher energy cost. Static replicas are the lowest or tied-lowest energy choice on steady, light, medium, and variable load because three replicas cover those traces, but static drops about 40% of heavy/bursty traffic and is not a safe general policy. See `results/RESULTS.md` and `results/EAES_DIAGNOSTIC.md`.
+## The short result
+
+In the confirmatory 10-seed simulation, EAES has lower mean estimated energy per
+served request than the simulated HPA formula on every workload by mean, and is
+exactly tied on light. It also provisions fewer replica-hours in every workload.
+**None of these paired energy differences survives Holm correction at alpha =
+0.05 on the ten confirmatory seeds.** The confidence intervals and effect sizes
+are reported instead of a significance claim. A separate 30-seed extension shows
+the same directional pattern with Holm-adjusted p < 0.05 for several workloads,
+but it is explicitly exploratory.
+
+The advantage is not free:
+
+- reactive EAES has small SLA-violation rates on variable (mean `0.0119`) and
+  bursty (mean `0.0170`) workloads;
+- the forecasting variant removes those variable-workload violations but uses
+  more energy per served request on that workload;
+- static replicas can show the lowest energy per served request while dropping
+  about 40% of heavy and bursty traffic, so those rows are not a safe policy;
+- the simulated HPA formula over-provisions strongly in these 300 s runs and is
+  not the native Kubernetes HPA controller.
+
+See `RESULTS.md` for the table and `results/RESULTS.md` for the authoritative
+generated report.
 
 ## What is deliberately not claimed
 
-- No physical power measurement. Kepler or an external meter was not available.
-- No reproduction of Li et al. (2025). The full text was paywalled; only bibliographic metadata was verified through Crossref.
-- No production multi-node cluster evaluation. Phase 7 is a single-node Minikube validation.
+- No physical power measurement, calibrated power curve, or Kepler result.
+- No reproduction of Li et al. (2025). The full text was paywalled; only
+  bibliographic metadata was verified through Crossref.
+- No production or multi-node cluster evaluation. The cluster check is a
+  single-node Minikube smoke validation with three repetitions per mode.
 - No claim that the legacy `cpu_threshold` strategy is Kubernetes HPA.
-- No use of the original 27-row dataset for inferential statistics. It contains nine deterministic cells copied three times.
+- No claim that the simulated `hpa_formula` is the native HPA controller.
+- No inferential use of the original 27-row dataset; it is nine deterministic
+  cells copied three times.
+- No claim that the dashboard shows live cluster data. It is a read-only view
+  over committed/generated artifacts.
 
 ## Project structure
 
 ```text
 flask-kubernetes/
-├── app.py                       # Flask service, preserved APIs, three-page dashboard
-├── controller.py                # Original demo controller (preserved)
-├── eaes/                        # Simulation package
-│   ├── backend.py               # SimulatedCluster and kubectl validation backend
-│   ├── config.py                # YAML loading, hashing, provenance helpers
-│   ├── energy.py                # Node-level energy model and pod attribution
-│   ├── engine.py                # Paired experiment loop and raw tick logs
-│   ├── forecast.py              # Holt and EWMA forecasters
-│   ├── strategies.py            # Five scaling strategies
-│   └── workloads/               # Deterministic workload trace generation
-├── analysis/                    # Statistics and EAES diagnostics
-├── experiments/                 # Full run and real-cluster validation entry points
-├── configs/                     # Experiment, simulation, energy, SLA, strategy YAML
-├── traces/                      # Deterministic per-workload/per-seed traces
-├── data/                        # Byte-identical read-only copies of original datasets
-├── results/                     # Generated tables, reports, raw tick logs, cluster logs
-├── templates/research/          # Three-page dashboard
-├── static/research.css/js       # Dashboard assets
-├── docs/                        # Methodology, validation, provenance, final report
-└── kubernetes/                  # Deployment, service, HPA manifests
+  app.py                         Flask service, legacy routes, research APIs, dashboard
+  controller.py                  Original demo controller (preserved, not the research model)
+  eaes/                          Simulation package
+    backend.py                   Simulated cluster and kubectl validation backend
+    config.py                    YAML loading, hashing, git provenance, atomic writes
+    energy.py                    Node-level energy model and pod attribution
+    engine.py                    Paired experiment loop and raw tick logs
+    forecast.py                  Holt and EWMA forecasters
+    strategies.py                Five confirmatory strategies plus extension oracle
+    workloads/                   Deterministic workload trace generation
+  analysis/                      Statistics, diagnostics, extensions, plots
+  experiments/                   Confirmatory, cluster, and extension runners
+  configs/                       Experiment, simulation, energy, SLA, strategy YAML
+  traces/                        Deterministic traces, including extension seeds
+  data/                          Read-only copies of the original datasets
+  results/                       Generated reports, tables, raw ticks, cluster records
+  templates/research/            Three-page dashboard
+  static/                        Dashboard CSS/JS and vendored Chart.js
+  docs/                          Architecture, reproduction, testing, extensions, limits
+  kubernetes/                    Deployment, service, HPA, namespace manifests
+  scripts/                       Document validation and clean-checkout reproduction
 ```
 
 ## Quick start
 
+Requirements: Python 3.11+ (tested on 3.11.9), Flask 3.1.3, PyYAML 6.0.3.
+The simulation, analysis, and tests are standard-library based apart from Flask
+and PyYAML. They do not require Docker or Kubernetes.
+
 ```powershell
-cd "C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes"
 python -m pip install -r requirements.txt
 $env:ENERGY_AWARE_NO_BG='1'
 python -m pytest -q
 python app.py
 ```
 
-Open `http://127.0.0.1:5000/`. The three main pages are:
+Open `http://127.0.0.1:5000/`. Main pages:
 
-- `/` — paired results
-- `/eaes-diagnostics` — decomposition, forecasting ablation, control-rule evidence
-- `/methodology` — assumptions, config values, hashes, limitations
+- `/` - results dashboard, workload/strategy/seed filters, time series,
+  energy-versus-drop comparison, tables, and cluster validation;
+- `/eaes-diagnostics` - EAES decomposition, controller trace, actual versus
+  forecast, scaling history, rule counts, and ablations;
+- `/methodology` - architecture, execution flow, workload generation, metrics,
+  energy estimator, Kubernetes integration, APIs, and limitations.
 
-Legacy HTML URLs (`/autoscaling-comparison`, `/energy-analysis`, `/performance-analysis`, `/experiment-explorer`, `/research-methodology`) still return HTML 200 as compatibility views. Existing JSON APIs are preserved; `/api/v1/experiments` still serves the original 27 records from `data/`.
+Legacy HTML URLs (`/autoscaling-comparison`, `/energy-analysis`,
+`/performance-analysis`, `/experiment-explorer`, `/research-methodology`) return
+HTTP 200 compatibility views. Existing JSON APIs are preserved;
+`/api/v1/experiments` still serves the original 27 records from `data/`.
 
-## Reproduce the research
+## Reproduce
+
+Default mode reuses the preserved confirmatory raw run and regenerates derived
+tables, charts, diagnostics, and tests. It does not silently invent a new run.
 
 ```powershell
-# 1. Rebuild deterministic traces and run all 300 paired simulations.
-python -m experiments.run_v3
-
-# 2. Generate descriptive statistics, bootstrap CIs, paired tests, Friedman/Nemenyi,
-#    forecast evaluation, and low/nominal/high + PUE sensitivity tables.
-python -m analysis.analyze
-
-# 3. Recompute the EAES diagnostic directly from raw per-tick JSONL logs.
-python -m analysis.diagnose
-
-# 4. Full test suite.
-$env:ENERGY_AWARE_NO_BG='1'
-python -m pytest -q
+# Verify protected dataset hashes, regenerate tables/charts, run tests, validate docs.
+.\reproduce.ps1
 ```
 
-`reproduce.ps1` and `reproduce.sh` wrap these steps. The run is deterministic for a fixed config and seed set; the run manifests record the config hashes, trace index, Python/package versions, git commit, and whether tracked files were dirty.
+```bash
+./reproduce.sh
+```
+
+Options:
+
+```powershell
+.\reproduce.ps1 -Rerun        # run the 300 paired simulations again
+.\reproduce.ps1 -Extensions   # also regenerate oracle/startup/30-seed/sensitivity
+.\reproduce.ps1 -SkipTests
+```
+
+To reproduce in a disposable clone and compare every committed derived artifact:
+
+```powershell
+.\scripts\clean_checkout_reproduction.ps1
+```
+
+The report is written to `results/extension/clean_checkout/REPRODUCTION_REPORT.txt`.
+The original working tree is not modified. See `docs/REPRODUCIBILITY.md`.
+
+## Documentation map
+
+| Document | Content |
+|---|---|
+| `METHODOLOGY.md` | Confirmatory design, strategies, workloads, metrics, energy model, statistics |
+| `RESULTS.md` | Confirmatory results with generated tables and paired comparisons |
+| `LIMITATIONS.md` | Consolidated limitations and threats to validity |
+| `docs/ARCHITECTURE.md` | Components, data flow, APIs, storage, execution modes |
+| `docs/EXECUTION_GUIDE.md` | Install, run, dashboard, experiments, tests, Docker, cluster |
+| `docs/DASHBOARD_GUIDE.md` | Page-by-page dashboard guide and data definitions |
+| `docs/TESTING.md` | Test catalog, commands, and isolation rules |
+| `docs/EXTENSIONS.md` | Oracle, startup sweep, 30 seeds, sensitivity, Pareto, forecast, HPA replay |
+| `docs/REVERSAL_EXPLANATION.md` | Why old energy numbers reversed and what changed |
+| `docs/KUBERNETES_VALIDATION.md` | Real cluster validation, native HPA replay, and limits |
+| `docs/REPRODUCIBILITY.md` | Reproduction and clean-checkout workflow |
+| `docs/verification_log.txt` | Commands, hashes, test runs, and verification evidence |
+| `AUDIT.md` | Original defects and dataset audit |
+| `ANALYSIS_PLAN.md` | Frozen analysis plan |
+| `docs/FINAL_REPORT.md` | Earlier phase report; not the final submission report |
 
 ## Real-cluster validation
 
-The separate validation used:
+The validation was performed on a single-node Minikube cluster:
 
 ```powershell
 minikube start --driver=docker --cpus=2 --memory=4096
@@ -107,45 +190,26 @@ kubectl port-forward -n energy-aware-dev svc/energy-aware-service 5001:5000
 python -m experiments.run_cluster_validation --repetitions 3 --duration 60 --rate 80
 ```
 
-Results: 3 static repetitions and 3 native-HPA repetitions, all requests served at 80 req/s in the validation window, with HPA scaling from 1 replica to 4. See `results/cluster_validation/CLUSTER_VALIDATION.md` and `docs/CLUSTER_ENVIRONMENT.md`. This validation is not the paired experiment and does not validate the simulation's energy ranking.
+Three static and three native-HPA repetitions were recorded. All 4,731-4,890
+offered requests were served per run, p95 latency was 29.3-32.7 ms, and the
+native HPA was observed at four replicas after an unobserved 1->4 scale-up.
+Energy per served request in the cluster table is modelled from node CPU and is
+dominated by the 150 W idle term; it is not a hardware measurement. See
+`docs/KUBERNETES_VALIDATION.md`.
 
-## Documentation map
+## Provenance
 
-| Document | Content |
-|---|---|
-| `AUDIT.md` | Original defects, preserved assets, dataset audit |
-| `docs/PROJECT_REVIEW_AND_PLAN.md` | Phase 0 plan and acceptance criteria |
-| `ANALYSIS_PLAN.md` | Frozen pre-registered analysis plan |
-| `docs/METHODOLOGY.md` | Research design and modelling assumptions |
-| `docs/SIMULATION_MODEL.md` | Queue, capacity, startup, latency model |
-| `docs/ENERGY_MODEL.md` | Power model, PUE, attribution, limitations |
-| `docs/STRATEGIES.md` | Exact decision rules for all five strategies |
-| `docs/EXPERIMENT_PROTOCOL.md` | Paired execution protocol and windows |
-| `docs/STATISTICAL_ANALYSIS.md` | Tests, corrections, effect sizes, software implementation |
-| `docs/RESULTS_AND_INTERPRETATION.md` | Results narrative and guardrails |
-| `docs/FAILURE_ANALYSIS.md` | Where EAES fails and why |
-| `docs/THREATS_TO_VALIDITY.md` | Construct, internal, external, conclusion threats |
-| `docs/KUBERNETES_VALIDATION.md` | Real-cluster validation record |
-| `docs/DATA_PROVENANCE.md` | Original data hashes and pseudo-replication |
-| `docs/REPRODUCIBILITY.md` | Exact commands, versions, artifact layout |
-| `docs/TESTING.md` | Test inventory and results |
-| `docs/DASHBOARD.md` | Dashboard pages, APIs, compatibility routes |
-| `docs/RELATED_WORK.md` | Verified related work and positioning |
-| `docs/RESEARCH_CONTRIBUTIONS.md` | What is new and what is not |
-| `docs/LIMITATIONS.md` | Consolidated limitations |
-| `docs/FINAL_REPORT.md` | 20-section final report |
-| `docs/CLUSTER_ENVIRONMENT.md` | Minikube/metrics-server environment |
-| `docs/DASHBOARD_AND_CONTAINER_VALIDATION.md` | Container smoke test record |
+- Protected dataset hashes:
+  - `experiment_results_v2.json`:
+    `6279D01DC92D9C4FBE2EBB2C5BA0C12A7DA3EA7CA985E9FA762E88A11F34234E`
+  - `experiment_results.json`:
+    `C4BF4BFFFA8D0242395D2A2FB966C16DBC4884078BE7E82395E778EF87968451`
+- The confirmatory run directory is preserved as generated and is verified
+  against its manifest and trace hashes.
+- Extension outputs live under `results/extension/` and are labelled
+  exploratory. They are never pooled with the confirmatory tables.
 
-## Original datasets
+## License / attribution
 
-The originals remain outside the repository and were not modified:
-
-- `experiment_results_v2.json` — SHA-256 `6279D01DC92D9C4FBE2EBB2C5BA0C12A7DA3EA7CA985E9FA762E88A11F34234E`
-- `experiment_results.json` — SHA-256 `C4BF4BFFFA8D0242395D2A2FB966C16DBC4884078BE7E82395E778EF87968451`
-
-`data/` contains byte-identical copies so the legacy API works in a fresh clone and inside the container. The 27-row v2 file is not independent evidence; see `docs/DATA_PROVENANCE.md`.
-
-## License and attribution
-
-The original application code is preserved from the student project baseline. The research additions are provided for academic inspection. Li et al. (2025), *Energy-aware elastic scaling algorithm for microservices in Kubernetes clouds*, DOI `10.1016/j.jnca.2025.104218`, is cited as related work only; this repository does not claim to reproduce it.
+This is a research/teaching artifact. It is EAES-inspired but does not reproduce
+Li et al. (2025). See `docs/RELATED_WORK.md` for the limited verified metadata.

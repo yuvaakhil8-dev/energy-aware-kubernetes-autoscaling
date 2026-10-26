@@ -1,0 +1,23 @@
+{
+  "config_hash": "37b2cb2b768b4380535ed3524195ccb97a57536298f6ecf01956429ecf705c92",
+  "confirmatory_run_unchanged": "v3_paired_20261025T220942Z",
+  "created_at": "2026-10-26T06:01:26.991363+00:00",
+  "extension": "energy_sensitivity",
+  "git_commit": "b986f8821a669c90102742ae268f30e744f258e3",
+  "git_tracked_dirty": false,
+  "label": "exploratory_extension",
+  "n_runs": 3600,
+  "nominal_recompute_max_rel_error": 0.0,
+  "notes": "Energy sensitivity only; confirmatory decisions and results are unchanged.",
+  "pue_values": [
+    1.0,
+    1.2,
+    1.4,
+    1.6
+  ],
+  "scenarios": [
+    "low",
+    "nominal",
+    "high"
+  ]
+}

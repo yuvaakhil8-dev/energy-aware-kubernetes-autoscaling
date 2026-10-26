@@ -1,127 +1,113 @@
-# Methodology
+# Methodology (detailed notes)
 
-**Project:** Energy-aware autoscaling for containerised microservices
-**Evidence type:** discrete-time simulation with a separate, non-confirmatory real-cluster validation
-**Frozen analysis plan:** `ANALYSIS_PLAN.md`
-**Confirmatory run:** `v3_paired_20261025T220942Z`
+The authoritative methodology is [`../METHODOLOGY.md`](../METHODOLOGY.md). This
+file records the simulation and statistical details needed to audit the
+implementation. It does not replace the frozen plan in
+[`../ANALYSIS_PLAN.md`](../ANALYSIS_PLAN.md).
 
-## 1. Research questions
+## 1. Confirmatory unit and pairing
 
-1. Under a fixed request trace and identical simulated cluster, does an SLA-first energy-aware controller (EAES) use less modelled energy per served request than a simulated Kubernetes HPA replica-formula baseline?
-2. Does any apparent energy advantage survive a change of denominator (served vs offered requests), a drop-rate/SLA check, and a replica-hours check?
-3. Does adding a short-horizon Holt forecast to EAES improve the SLA/energy trade-off under variable and bursty load?
-4. Can a real single-node Kubernetes HPA be exercised to verify that the deployment, metrics path, and HPA controller work, without presenting that validation as the confirmatory experiment?
+- Unit: one workload x seed x strategy run.
+- Files: `results/runs/v3_paired_20261025T220942Z/<workload>_seed<N>_<strategy>.jsonl`.
+- Pairing key: `(workload, seed)`.
+- Sample size: 10 pairs per workload/strategy/baseline comparison.
+- Ticks per run: 60 (300 s / 5 s), of which 54 are post-warm-up (30-300 s).
+- Primary metrics are aggregated once per run; ticks are never independent
+  observations.
 
-## 2. What is being compared
+## 2. Simulation mechanics
 
-Five strategies are implemented separately:
+The backend is a deterministic discrete-time model:
 
-| Name | Role | Is it Kubernetes HPA? |
-|---|---|---|
-| `static` | Fixed three replicas | No |
-| `cpu_threshold` | Legacy 80%/30% rule with 5% hysteresis and cooldowns | No |
-| `hpa_formula` | Simulated HPA replica formula with tolerance and scale-down stabilization | No; simulated formula only |
-| `eaes` | SLA-first lexicographic controller using demand, ready/pending replicas, backlog, margin, cooldown, dwell, and stabilization | No; EAES-inspired |
-| `forecasting_eaes` | EAES with a Holt forecast over the startup horizon | No; EAES-inspired with ablation |
+- nodes hold four pods;
+- a ready pod serves 10 req/s;
+- new pods take 10 s to become ready;
+- the queue is bounded by `max_queue_factor` x per-tick capacity;
+- initial replicas are 3, min/max are 1/10;
+- latency is modelled as `base_latency_ms + 3 x queue_wait`;
+- requests are dropped only when the bounded queue overflows;
+- CPU utilisation is derived from demand and ready capacity;
+- energy is computed per tick from active-node CPU and PUE.
 
-The original project used the word “HPA” for a toy 65/35 rule. That rule is now labelled `cpu_threshold`. The actual Kubernetes HPA controller is used only in Phase 7’s separate validation.
+The model is not a Kubernetes scheduler or network simulator. It does not model
+container image pull time, readiness-probe details, node pressure, retries,
+multi-service dependencies, or heterogeneous hardware.
 
-## 3. Design
+## 3. Statistics
 
-- **Unit of analysis:** one workload × seed × strategy run.
-- **Within-unit pairing:** every strategy is run on the same deterministic arrival trace for a given workload and seed.
-- **Workloads:** steady, light, medium, heavy, variable, bursty.
-- **Seeds:** 1–10, ten per workload.
-- **Runs:** 6 × 10 × 5 = 300.
-- **Simulated duration:** 300 s.
-- **Control interval:** 5 s.
-- **Warm-up:** 30 s excluded from primary metrics; raw logs retain every tick, including warm-up.
-- **Initial replicas:** three for all strategies, so the trajectory is not seeded by a strategy-specific advantage.
-- **Primary window:** 30–300 s, 54 ticks per run.
+### Descriptive
 
-The same trace is reused across strategies for a seed. Traces are generated deterministically and hashed in `traces/index.json` and in each run manifest. The experiment runner refuses to treat a mismatched trace as paired evidence.
+For each workload x strategy x metric, the generated table reports n, missing,
+mean, median, standard deviation, mean 95% bootstrap CI, and median 95%
+bootstrap CI. The bootstrap uses 5,000 resamples and fixed stable seeds derived
+from the table key.
 
-## 4. Simulation model in brief
+### Paired effects
 
-The simulated cluster has fixed-capacity nodes (four pods per node), 10 req/s per ready pod, a 10 s pod startup delay, a bounded queue, and a minimum/maximum of 1/10 replicas. Only **ready** replicas contribute capacity. A controller that adds replicas during a burst therefore pays the startup delay.
+For each workload x strategy x baseline x metric:
 
-Per tick:
+- differences are computed within each seed: strategy value minus baseline;
+- the headline is the median paired difference with a 95% bootstrap CI;
+- the mean paired difference is also generated;
+- Wilcoxon signed-rank uses the normal approximation with tie correction;
+- p-values are Holm-adjusted within each workload x baseline family across all
+  metrics in that family;
+- Cliff's delta is computed from the paired values.
 
-1. Read ready replicas, pending replicas, capacity, backlog, CPU utilisation, and the previous arrival rate.
-2. Ask the strategy for a desired replica count.
-3. Apply the change; new replicas enter a pending queue.
-4. Serve up to `ready_replicas × pod_capacity_rps × Δt` requests from backlog plus new arrivals.
-5. Drop requests only when the bounded queue overflows.
-6. Compute modelled node energy from node utilisation.
-7. Record one raw JSONL row with all decisions and outcomes.
+If there are fewer than five non-zero differences, the test is marked
+`not_testable` and no p-value is invented. This is why exact ties (for example,
+EAES vs HPA on light) show `not testable`.
 
-The full model is in `docs/SIMULATION_MODEL.md`.
+### Friedman/Nemenyi
 
-## 5. Energy model in brief
+The analysis generates Friedman and Nemenyi tables as secondary omnibus checks.
+They are not used to rescue a non-significant pre-specified comparison. See
+`results/tables/friedman.csv` and `results/tables/nemenyi.csv`.
 
-For each active node and tick:
+## 4. Energy accounting
+
+The model is:
 
 ```text
-P_node(u) = P_idle + (P_max - P_idle) · u          [W]
-E_node    = P_node(u) · Δt · PUE + startup_energy  [J]
-u         = served requests on that node / node capacity in the tick
+P_node(u) = P_idle + (P_max - P_idle) * u
+E_node = P_node(u) * dt * PUE
 ```
 
-Nominal assumptions: `P_idle = 150 W`, `P_max = 500 W`, `PUE = 1.2`. Low and high scenarios and PUE 1.0–1.6 are used for sensitivity. Dynamic node energy is attributed to pods by CPU-use share; idle/startup energy by requested-resource share. Conservation is tested and recomputed from raw logs.
+Active nodes are `ceil(ready_replicas / 4)` with a minimum of one. Pod energy is
+attributed by pod CPU share; the conservation error between node and pod totals
+is recorded. Nominal `P_idle=150 W`, `P_max=500 W`, `PUE=1.2`.
 
-Energy is an **output metric**, never a scaling input. This is why the post-hoc power/PUE sensitivity recomputation is valid: changing power assumptions cannot change which replicas each controller chose.
+The run-level energy per served request is:
 
-The full model and caveats are in `docs/ENERGY_MODEL.md`.
+```text
+sum(node_energy_j over measured ticks) / sum(served_requests over measured ticks)
+```
 
-## 6. Metrics
+and energy per offered request uses the same numerator with offered requests.
+A zero-served run yields null for the served denominator. No `max(1, count)` or
+other artificial denominator is used.
 
-Primary metrics:
+## 5. Forecast
 
-- **Energy per served request (J):** measurement-window node energy divided by measurement-window served requests. Null when served = 0; no artificial denominator.
-- **SLA violation rate:** `(dropped + served requests whose average latency exceeds 500 ms) / offered requests`.
-- **Replica-hours:** time-integrated ready replicas over the measurement window.
-- **Drop rate:** dropped / offered in the measurement window.
+`forecasting_eaes` uses Holt with alpha 0.5 and beta 0.3 over a two-tick (10 s)
+horizon. The forecast is updated online and recorded at decision time. The
+held-out accuracy analysis uses the final 50% of each trace and MAPE excludes
+zero and below-0.5 req/s actuals, with excluded counts reported.
 
-Diagnostic metrics: energy per offered request, served/offered ratio, average and p95 latency, scaling events, oscillations, pending replicas, over-provisioning, cooldown/stabilization holds, rule counts, and node/pod conservation error.
+The forecasting ablation is not a claim of universal superiority. Accuracy is
+necessary but not sufficient for better control.
 
-## 7. Statistical analysis
+## 6. Extensions
 
-- Paired by workload and seed.
-- 5,000-resample bootstrap 95% confidence intervals.
-- Wilcoxon signed-rank tests for paired strategy differences, Holm correction within each workload × baseline family.
-- Friedman test across the five strategies per workload and metric; Nemenyi post-hoc with critical difference.
-- Cliff’s delta for paired effect size.
-- Forecast evaluation on the held-out final 50% of each trace (EWMA vs Holt).
-- Separate low/nominal/high and PUE sensitivity tables.
+The oracle, startup-delay sweep, 30-seed extension, energy/PUE sensitivity,
+Pareto plots, forecast accuracy, and HPA replay are documented in
+[`EXTENSIONS.md`](EXTENSIONS.md). They are exploratory and are not pooled with
+the confirmatory result.
 
-The analysis is pre-registered in `ANALYSIS_PLAN.md`; tests were not selected after seeing outcomes. Full details are in `docs/STATISTICAL_ANALYSIS.md`.
+## 7. Historical documents
 
-## 8. Real-cluster validation
-
-A separate Phase 7 validation used a real single-node Minikube cluster, metrics-server, a native `autoscaling/v2` HPA, and the Flask service. It ran three static repetitions and three HPA repetitions at 80 req/s for 60 s after reset. Replica counts and request outcomes are real Kubernetes observations. Energy in that file is modelled from measured node CPU.
-
-This validation is **not** the paired experiment, does **not** use the simulated traces, and does **not** support the simulation’s energy rankings. See `docs/KUBERNETES_VALIDATION.md`.
-
-## 9. What would falsify the main claim
-
-The main claim would be undermined if, after the denominator and drop/SLA checks:
-
-- EAES had higher energy per served request than the HPA formula on most workloads;
-- EAES’s advantage disappeared when energy per offered request was used;
-- EAES served materially fewer requests;
-- the advantage existed only under one power scenario or PUE; or
-- the advantage came from a single seed or a post-hoc metric change.
-
-The generated diagnostic explicitly checks the first four conditions. The run is fixed-seed and paired to address the fifth.
-
-## 10. Provenance
-
-Each run manifest records the config hashes, trace index, Python/package versions, git commit, and a `git_tracked_dirty` flag. The confirmatory run was produced from commit `431810f` with a clean tracked tree. The original datasets are frozen and hashed in `docs/DATA_PROVENANCE.md`.
-
-## 11. Ethical and reporting stance
-
-- Modelled energy is never called measured energy.
-- The threshold baseline is never called HPA.
-- Li et al. (2025) is cited as related work, not as a reproduced result.
-- Negative findings (EAES SLA violations on variable/bursty load; forecasting cost) are reported prominently.
-- The original pseudo-replicated dataset is not used for significance testing.
+`SIMULATION_MODEL.md`, `STATISTICAL_ANALYSIS.md`, `ENERGY_MODEL.md`,
+`EXPERIMENT_PROTOCOL.md`, and `THREATS_TO_VALIDITY.md` contain additional
+historical detail. Where an older document conflicts with the root
+[`../METHODOLOGY.md`](../METHODOLOGY.md), the root document and the generated
+`results/RESULTS.md` are authoritative.

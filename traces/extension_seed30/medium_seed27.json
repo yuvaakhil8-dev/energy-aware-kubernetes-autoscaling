@@ -1,0 +1,369 @@
+{
+  "control_interval_s": 5,
+  "duration_s": 300,
+  "seed": 27,
+  "ticks": [
+    {
+      "arrivals": 115,
+      "rate_rps": 25.0,
+      "tick": 0,
+      "time_s": 0
+    },
+    {
+      "arrivals": 111,
+      "rate_rps": 25.0,
+      "tick": 1,
+      "time_s": 5
+    },
+    {
+      "arrivals": 132,
+      "rate_rps": 25.0,
+      "tick": 2,
+      "time_s": 10
+    },
+    {
+      "arrivals": 123,
+      "rate_rps": 25.0,
+      "tick": 3,
+      "time_s": 15
+    },
+    {
+      "arrivals": 144,
+      "rate_rps": 25.0,
+      "tick": 4,
+      "time_s": 20
+    },
+    {
+      "arrivals": 133,
+      "rate_rps": 25.0,
+      "tick": 5,
+      "time_s": 25
+    },
+    {
+      "arrivals": 120,
+      "rate_rps": 25.0,
+      "tick": 6,
+      "time_s": 30
+    },
+    {
+      "arrivals": 134,
+      "rate_rps": 25.0,
+      "tick": 7,
+      "time_s": 35
+    },
+    {
+      "arrivals": 128,
+      "rate_rps": 25.0,
+      "tick": 8,
+      "time_s": 40
+    },
+    {
+      "arrivals": 118,
+      "rate_rps": 25.0,
+      "tick": 9,
+      "time_s": 45
+    },
+    {
+      "arrivals": 136,
+      "rate_rps": 25.0,
+      "tick": 10,
+      "time_s": 50
+    },
+    {
+      "arrivals": 118,
+      "rate_rps": 25.0,
+      "tick": 11,
+      "time_s": 55
+    },
+    {
+      "arrivals": 148,
+      "rate_rps": 25.0,
+      "tick": 12,
+      "time_s": 60
+    },
+    {
+      "arrivals": 136,
+      "rate_rps": 25.0,
+      "tick": 13,
+      "time_s": 65
+    },
+    {
+      "arrivals": 121,
+      "rate_rps": 25.0,
+      "tick": 14,
+      "time_s": 70
+    },
+    {
+      "arrivals": 123,
+      "rate_rps": 25.0,
+      "tick": 15,
+      "time_s": 75
+    },
+    {
+      "arrivals": 135,
+      "rate_rps": 25.0,
+      "tick": 16,
+      "time_s": 80
+    },
+    {
+      "arrivals": 109,
+      "rate_rps": 25.0,
+      "tick": 17,
+      "time_s": 85
+    },
+    {
+      "arrivals": 124,
+      "rate_rps": 25.0,
+      "tick": 18,
+      "time_s": 90
+    },
+    {
+      "arrivals": 109,
+      "rate_rps": 25.0,
+      "tick": 19,
+      "time_s": 95
+    },
+    {
+      "arrivals": 127,
+      "rate_rps": 25.0,
+      "tick": 20,
+      "time_s": 100
+    },
+    {
+      "arrivals": 125,
+      "rate_rps": 25.0,
+      "tick": 21,
+      "time_s": 105
+    },
+    {
+      "arrivals": 141,
+      "rate_rps": 25.0,
+      "tick": 22,
+      "time_s": 110
+    },
+    {
+      "arrivals": 122,
+      "rate_rps": 25.0,
+      "tick": 23,
+      "time_s": 115
+    },
+    {
+      "arrivals": 125,
+      "rate_rps": 25.0,
+      "tick": 24,
+      "time_s": 120
+    },
+    {
+      "arrivals": 140,
+      "rate_rps": 25.0,
+      "tick": 25,
+      "time_s": 125
+    },
+    {
+      "arrivals": 117,
+      "rate_rps": 25.0,
+      "tick": 26,
+      "time_s": 130
+    },
+    {
+      "arrivals": 139,
+      "rate_rps": 25.0,
+      "tick": 27,
+      "time_s": 135
+    },
+    {
+      "arrivals": 121,
+      "rate_rps": 25.0,
+      "tick": 28,
+      "time_s": 140
+    },
+    {
+      "arrivals": 112,
+      "rate_rps": 25.0,
+      "tick": 29,
+      "time_s": 145
+    },
+    {
+      "arrivals": 134,
+      "rate_rps": 25.0,
+      "tick": 30,
+      "time_s": 150
+    },
+    {
+      "arrivals": 131,
+      "rate_rps": 25.0,
+      "tick": 31,
+      "time_s": 155
+    },
+    {
+      "arrivals": 119,
+      "rate_rps": 25.0,
+      "tick": 32,
+      "time_s": 160
+    },
+    {
+      "arrivals": 143,
+      "rate_rps": 25.0,
+      "tick": 33,
+      "time_s": 165
+    },
+    {
+      "arrivals": 143,
+      "rate_rps": 25.0,
+      "tick": 34,
+      "time_s": 170
+    },
+    {
+      "arrivals": 117,
+      "rate_rps": 25.0,
+      "tick": 35,
+      "time_s": 175
+    },
+    {
+      "arrivals": 118,
+      "rate_rps": 25.0,
+      "tick": 36,
+      "time_s": 180
+    },
+    {
+      "arrivals": 124,
+      "rate_rps": 25.0,
+      "tick": 37,
+      "time_s": 185
+    },
+    {
+      "arrivals": 123,
+      "rate_rps": 25.0,
+      "tick": 38,
+      "time_s": 190
+    },
+    {
+      "arrivals": 117,
+      "rate_rps": 25.0,
+      "tick": 39,
+      "time_s": 195
+    },
+    {
+      "arrivals": 132,
+      "rate_rps": 25.0,
+      "tick": 40,
+      "time_s": 200
+    },
+    {
+      "arrivals": 125,
+      "rate_rps": 25.0,
+      "tick": 41,
+      "time_s": 205
+    },
+    {
+      "arrivals": 127,
+      "rate_rps": 25.0,
+      "tick": 42,
+      "time_s": 210
+    },
+    {
+      "arrivals": 125,
+      "rate_rps": 25.0,
+      "tick": 43,
+      "time_s": 215
+    },
+    {
+      "arrivals": 127,
+      "rate_rps": 25.0,
+      "tick": 44,
+      "time_s": 220
+    },
+    {
+      "arrivals": 115,
+      "rate_rps": 25.0,
+      "tick": 45,
+      "time_s": 225
+    },
+    {
+      "arrivals": 115,
+      "rate_rps": 25.0,
+      "tick": 46,
+      "time_s": 230
+    },
+    {
+      "arrivals": 120,
+      "rate_rps": 25.0,
+      "tick": 47,
+      "time_s": 235
+    },
+    {
+      "arrivals": 121,
+      "rate_rps": 25.0,
+      "tick": 48,
+      "time_s": 240
+    },
+    {
+      "arrivals": 136,
+      "rate_rps": 25.0,
+      "tick": 49,
+      "time_s": 245
+    },
+    {
+      "arrivals": 129,
+      "rate_rps": 25.0,
+      "tick": 50,
+      "time_s": 250
+    },
+    {
+      "arrivals": 115,
+      "rate_rps": 25.0,
+      "tick": 51,
+      "time_s": 255
+    },
+    {
+      "arrivals": 112,
+      "rate_rps": 25.0,
+      "tick": 52,
+      "time_s": 260
+    },
+    {
+      "arrivals": 140,
+      "rate_rps": 25.0,
+      "tick": 53,
+      "time_s": 265
+    },
+    {
+      "arrivals": 130,
+      "rate_rps": 25.0,
+      "tick": 54,
+      "time_s": 270
+    },
+    {
+      "arrivals": 134,
+      "rate_rps": 25.0,
+      "tick": 55,
+      "time_s": 275
+    },
+    {
+      "arrivals": 112,
+      "rate_rps": 25.0,
+      "tick": 56,
+      "time_s": 280
+    },
+    {
+      "arrivals": 124,
+      "rate_rps": 25.0,
+      "tick": 57,
+      "time_s": 285
+    },
+    {
+      "arrivals": 134,
+      "rate_rps": 25.0,
+      "tick": 58,
+      "time_s": 290
+    },
+    {
+      "arrivals": 142,
+      "rate_rps": 25.0,
+      "tick": 59,
+      "time_s": 295
+    }
+  ],
+  "trace_hash": "4a2d795779708d1e52521d5190c784fb798274b73b1b4c7603b4e15c5515da30",
+  "workload": "medium"
+}
