@@ -30,7 +30,7 @@ $env:ENERGY_AWARE_NO_BG='1'
 python -m pytest -q
 ```
 
-Expected: `112 passed`. The suite includes route contracts, simulation
+Expected: `113 passed`. The suite includes route contracts, simulation
 invariants, statistics, headline generation, dashboard APIs, extension
 manifests, and forecast zero-exclusion checks. See `docs/TESTING.md`.
 

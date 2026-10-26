@@ -1,5 +1,6 @@
 """Dataset integrity tests for experiment_results_v2.json."""
 import collections
+import hashlib
 import json
 import os
 
@@ -7,7 +8,15 @@ import pytest
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
-V2 = os.path.join(PROJECT_ROOT, 'experiment_results_v2.json')
+
+
+def _dataset(name):
+    """Prefer the tracked data/ copy so tests work in a clean checkout."""
+    tracked = os.path.join(BASE_DIR, 'data', name)
+    return tracked if os.path.exists(tracked) else os.path.join(PROJECT_ROOT, name)
+
+
+V2 = _dataset('experiment_results_v2.json')
 
 STRATEGIES = {'static', 'hpa', 'energy_aware'}
 WORKLOADS = {'light', 'medium', 'heavy'}
@@ -90,9 +99,22 @@ def test_pseudo_replication_is_flagged(records):
 
 
 def test_legacy_dataset_untouched():
-    legacy = os.path.join(PROJECT_ROOT, 'experiment_results.json')
+    legacy = _dataset('experiment_results.json')
     assert os.path.exists(legacy)
     with open(legacy, encoding='utf-8') as fh:
         data = json.load(fh)
     assert isinstance(data, list)
     assert len(data) == 18
+
+
+def test_tracked_dataset_hashes():
+    expected = {
+        'experiment_results_v2.json':
+            '6279D01DC92D9C4FBE2EBB2C5BA0C12A7DA3EA7CA985E9FA762E88A11F34234E',
+        'experiment_results.json':
+            'C4BF4BFFFA8D0242395D2A2FB966C16DBC4884078BE7E82395E778EF87968451',
+    }
+    for name, digest in expected.items():
+        with open(_dataset(name), 'rb') as fh:
+            actual = hashlib.sha256(fh.read()).hexdigest().upper()
+        assert actual == digest, name

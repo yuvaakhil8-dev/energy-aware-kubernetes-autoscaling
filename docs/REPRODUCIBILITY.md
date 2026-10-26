@@ -7,7 +7,7 @@
   Friedman/Nemenyi tables, forecast evaluation, and sensitivity tables.
 - The raw per-tick logs.
 - The three-page dashboard and preserved API surface.
-- The 112-test suite.
+- The 113-test suite.
 - The separate Minikube/HPA validation if Docker Desktop and Minikube are
   available.
 

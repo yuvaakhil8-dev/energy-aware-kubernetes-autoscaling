@@ -103,7 +103,7 @@ where they conflict. Detailed threat analysis remains in
     available at the final verification time, so no additional cluster
     repetitions were run.
 30. **No automated cluster integration test in pytest.** Cluster checks are
-    separate commands and are not part of the 112-test suite.
+    separate commands and are not part of the 113-test suite.
 
 ## 5. Implementation
 

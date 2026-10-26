@@ -26,7 +26,7 @@ any result in this repository.
 | Execution mode | `simulation` |
 | Run git commit | `431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea` |
 | Tracked tree at run | clean (`git_tracked_dirty: false`) |
-| Tests | 112 passing (see `results/test_report.txt`) |
+| Tests | 113 passing (see `results/test_report.txt`) |
 | Confirmatory inference | paired by workload + seed, 5,000-resample bootstrap, Holm-adjusted Wilcoxon |
 | Real cluster | Single-node Minikube v1.39.0 / Kubernetes v1.37.0, Docker driver |
 | Dashboard | `/`, `/eaes-diagnostics`, `/methodology` |
