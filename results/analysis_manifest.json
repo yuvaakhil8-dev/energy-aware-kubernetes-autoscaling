@@ -1,8 +1,8 @@
 {
   "alpha": 0.05,
-  "analyzed_at": "2026-10-26T05:33:57.640287+00:00",
+  "analyzed_at": "2026-10-26T06:20:20.415017+00:00",
   "bootstrap_resamples": 5000,
-  "git_commit": "149b5090b455a5d81afa324402342c2dd0433692",
+  "git_commit": "4953d1cca68e25ac8d3214890aab5953c17ff582",
   "n_seeds": 10,
   "n_summaries": 300,
   "nominal_energy_recompute_max_rel_error": 8.060663174190911e-16,

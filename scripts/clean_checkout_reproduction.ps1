@@ -9,10 +9,14 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$source = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repoRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$source = $repoRoot
 Set-Location $source
 if (-not $ReportDir) {
-    $ReportDir = Join-Path $source "results\extension\clean_checkout"
+    $ReportDir = Join-Path $repoRoot "results\extension\clean_checkout"
+}
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) {
+    throw "Repository root not found at $repoRoot"
 }
 New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
 
