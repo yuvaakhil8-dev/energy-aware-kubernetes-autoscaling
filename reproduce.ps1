@@ -28,7 +28,7 @@ function Invoke-Step([string]$Label, [scriptblock]$Body) {
 
 Invoke-Step "Python and dependency check" {
     python --version
-    python -c "import flask, yaml; print('Flask', flask.__version__, '| PyYAML', yaml.__version__)"
+    python -c "import importlib.metadata as m, yaml; print('Flask', m.version('flask'), '| PyYAML', yaml.__version__)"
 }
 
 Invoke-Step "Configuration load" {

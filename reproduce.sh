@@ -29,7 +29,7 @@ step() {
 }
 
 step "Python and dependency check" python --version
-step "Dependency import" python -c "import flask, yaml; print('Flask', flask.__version__, '| PyYAML', yaml.__version__)"
+step "Dependency import" python -c "import importlib.metadata as m, yaml; print('Flask', m.version('flask'), '| PyYAML', yaml.__version__)"
 step "Configuration load" python -c "from eaes.config import load_configs; c=load_configs(); print('configs OK:', ', '.join(sorted(c)))"
 step "Protected dataset hashes" python analysis/verify_dataset_hashes.py
 

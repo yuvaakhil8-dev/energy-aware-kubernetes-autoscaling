@@ -1,17 +1,15 @@
-CLEAN-CHECKOUT REPRODUCTION REPORT
+﻿CLEAN-CHECKOUT REPRODUCTION REPORT
 ==================================
+Started:       2026-10-26 11:52:22
+Source:        C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes
+Branch:        research-rebuild
+Commit:        c1355cf778849a778f6345a64caf5277510fc466
+Clone:         C:\Users\yuvaa\AppData\Local\Temp\eaes-clean-20261026T115222Z
 
-Status: not yet generated in this working tree.
+Cloning the committed branch...
 
-Run:
+Running reproduce.ps1 -SkipTests in the clone (tests are run separately below)...
 
-    powershell -ExecutionPolicy Bypass -File scripts/clean_checkout_reproduction.ps1
-
-The script clones the current branch into a temporary directory, runs the
-default reproduction and tests, compares committed derived artifacts by
-SHA-256, and overwrites this file with the result. A successful report records
-the clone path, branch, commit, hashes, matches, differences, and exit codes.
-
-This placeholder is committed so documentation references resolve before the
-first clean-checkout run. A "not yet generated" report must not be cited as
-evidence of reproduction.
+ERROR: <string>:1: DeprecationWarning: The '__version__' attribute is deprecated and will be removed in Flask 3.2. Use feature detection or 'importlib.metadata.version("flask")' instead.
+RESULT: FAIL - reproduction aborted.
+Finished:      2026-10-26 11:52:29
