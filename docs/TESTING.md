@@ -111,10 +111,12 @@ approximation for Wilcoxon and a chi-square survival function for Friedman.
 6. records matches, differences, missing files, git status, and exit codes;
 7. writes `results/extension/clean_checkout/REPRODUCTION_REPORT.txt`.
 
-The expected non-byte-identical file is `results/analysis_manifest.json` because
-it records an analysis timestamp and possibly the analysis commit. The comparison
-list excludes that file and compares the substantive tables, reports, SVGs, and
-replay outputs.
+The comparison excludes provenance-only timestamp/commit files
+(`results/analysis_manifest.json`, `results/diagnostic.json`,
+`results/EAES_DIAGNOSTIC.md`, and `results/extension/hpa_replay/manifest.json`)
+and compares 25 substantive tables, reports, SVGs, and replay outputs. The final
+clean-clone run matched 25/25, passed all 113 tests, and passed document
+validation.
 
 ## 9. How to add a test safely
 

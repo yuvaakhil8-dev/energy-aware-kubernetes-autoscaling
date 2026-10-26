@@ -107,7 +107,7 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
     $diff = git status --porcelain
     if ($diff) {
         Write-Host ""
-        Write-Host "Working-tree changes after reproduction (expected: analysis_manifest timestamp and regenerated report):"
+        Write-Host "Working-tree changes after reproduction (expected: analysis/commit provenance fields and regenerated timestamps):"
         $diff | ForEach-Object { Write-Host "  $_" }
     } else {
         Write-Host "Working tree clean after reproduction."

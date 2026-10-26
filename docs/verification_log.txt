@@ -154,3 +154,228 @@ STEP 1.6 - PROTECTED HASH RE-CHECK AFTER SOFTWARE WORK
 -------------------------------------------------------------------------------
 To be appended after all phases; see FINAL RE-CHECK at the end of this file.
 
+
+-------------------------------------------------------------------------------
+STEP 2 - HEADLINE TABLES AND PAIRED EFFECTS
+-------------------------------------------------------------------------------
+Commit: af89820
+Commands:
+  python -m analysis.make_headline_table
+  python -m pytest -q
+Outputs:
+  results/tables/headline.csv       240 rows (6 workloads x 5 strategies x 8 metrics)
+  results/tables/headline.md
+  results/tables/paired_headline.csv 432 rows
+  results/RESULTS.md                generated authoritative report
+  results/test_report.txt
+Result: PASS
+  - All primary metrics are aggregated to one run-level value before inference.
+  - EAES vs HPA-formula energy per served request has a negative median paired
+    difference on medium, heavy, variable, and bursty, and is exactly tied on
+    light.  The steady median is negative but its interval includes zero.
+  - No confirmatory comparison is Holm-significant at alpha = 0.05 with 10 seeds.
+  - Paired results are reported with median difference, 95% bootstrap CI,
+    Holm-adjusted Wilcoxon p, and Cliff's delta; the nonsignificance is not
+    hidden or reframed.
+
+Key generated values (mean J per served request):
+  heavy:    static 16.5000, cpu_threshold 17.3944, hpa_formula 21.3375,
+            eaes 18.5782, forecasting_eaes 18.6521
+  variable: static 21.8699, cpu_threshold 21.8699, hpa_formula 44.5468,
+            eaes 23.0221, forecasting_eaes 26.8300
+  bursty:   static 21.1145, cpu_threshold 23.0307, hpa_formula 30.4467,
+            eaes 29.4617, forecasting_eaes 29.4617
+
+-------------------------------------------------------------------------------
+STEP 3 - EXPLORATORY EXTENSIONS
+-------------------------------------------------------------------------------
+Extension code commit: b986f88
+Extension evidence commit: 4953d1c
+Commands:
+  python -m experiments.run_extensions
+  python -m analysis.energy_sensitivity
+  python -m analysis.energy_vs_drop
+  python -m analysis.hpa_replay
+  python -m analysis.forecast_accuracy
+Result: PASS
+  - oracle:        360 runs; manifest label exploratory_extension,
+                   confirmatory_run_unchanged=v3_paired_20261025T220942Z,
+                   git_tracked_dirty=false
+  - startup_sweep: 360 runs (EAES/forecasting EAES; delays 5, 10, 20 s)
+  - seed30:        600 runs (seeds 11-30; five confirmatory strategies)
+  - sensitivity:   3,600 runs (3 power scenarios x 4 PUE values x 300 runs)
+  - forecast:      120 held-out rows and 12 summaries
+  - HPA replay:    30 transitions; agreement 1.0000; 0 mismatches
+
+Energy/PUE sensitivity:
+  nominal recomputation max relative error = 0.000e+00
+  no strategy rank changes across low/nominal/high power or PUE 1.0-1.6
+  (ties are exact; arbitrary numeric order among ties is not interpreted).
+
+Oracle upper bound (mean J/served; exploratory, not deployable):
+  medium:   oracle 18.8316 vs EAES 20.9615
+  heavy:    oracle 17.9644 vs EAES 18.5782
+  variable: oracle 22.1001 vs EAES 23.0221
+  bursty:   oracle 26.6304 vs EAES 29.4617
+  The oracle has zero SLA violations in these cells but is excluded from the
+  confirmatory comparison.
+
+30-seed EAES vs HPA formula (energy per served request, Holm p):
+  medium   -10.7518 J, p=0.001094
+  heavy     -2.8399 J, p=0.001522
+  variable -20.1116 J, p=0.001165
+  bursty    -0.9790 J, p=0.001504
+  steady     0.0000 J, p=0.3449; light not testable (exact tie)
+  Direction agrees with the confirmatory run, but this extension is exploratory.
+
+Forecast evidence:
+  EWMA MAE below Holt on every inspected workload.
+  Bursty MAE remains large (EWMA 39.66, Holt 45.33) for a two-step horizon.
+  Forecasting does not remove bursty SLA violations; it improves variable SLA
+  at 10 s and 20 s startup delay while costing more energy.
+
+Native-HPA replay:
+  Recorded Minikube HPA samples only; steady-state window; the initial 1->4
+  scale-up is not observed.  Weak validation, not a burst/cold-start test.
+
+No protected data or confirmatory run file was modified by extension generation.
+All extension outputs remain under results/extension/ or labelled extension
+tables; none is pooled with the confirmatory inference.
+
+-------------------------------------------------------------------------------
+STEP 4 - DASHBOARD BROWSER VERIFICATION
+-------------------------------------------------------------------------------
+Environment: Flask development server on 127.0.0.1:5000, current checkout.
+An old pre-existing Flask process was initially still bound to port 5000 and
+served stale API/JS; it was killed with the other stale app processes and the
+current checkout was restarted.  This was a process-state issue, not a source
+defect.
+
+Page 1 (/):
+  - All five canvases have live Chart.js instances:
+    tsWorkloadChart (60 points), tsCpuChart (60), tsReplicaChart (180),
+    resultChart (30), energyDropChart (30).
+  - Changing workload=bursty, strategy=forecasting_eaes, seed=1 reloaded real
+    backend data: 29.46 J/served, 29.46 J/offered, 0.00% drop, 1.70% SLA,
+    337.1 ms p95, 0.717 replica-hours, 7 scaling events.
+  - No console errors after the restart.
+  - The table view contained 121 descriptive rows, 49 paired rows, and the
+    cluster table.
+
+Page 2 (/eaes-diagnostics):
+  - traceForecastChart and diagnosticChart rendered (60 and 12 points).
+  - The trace showed a real raw JSONL tick and final decision, including rule,
+    reason, cooldown status, SLA margin, and decision details.
+  - No console errors.
+  - The word "error" appears legitimately in the conservation-error label; this
+    is not a UI failure.
+
+Page 3 (/methodology):
+  - 16 sections rendered, including architecture, workload generation, metrics,
+    APIs, execution modes, Kubernetes integration, five strategies, energy
+    model, statistics, reproduction, extensions, dataset integrity, limitations.
+  - Native-HPA distinction and modelled-energy notice are present.
+  - No console errors.
+
+Result: PASS - all three pages render with real backend data and local Chart.js;
+no uncaught JavaScript errors were observed.
+
+-------------------------------------------------------------------------------
+STEP 5 - TESTS, DOCUMENTS, REPRODUCTION, AND CLEAN CHECKOUT
+-------------------------------------------------------------------------------
+Full suite:
+  $env:ENERGY_AWARE_NO_BG='1'
+  python -m pytest -q
+Output:
+  113 passed in 6.39s
+Result: PASS
+  Coverage now includes the five strategies plus oracle behavior, simulation
+  invariants, statistics, headline generation, dataset hashes, dashboard APIs,
+  extension manifests, forecast zero-exclusion, sensitivity exact nominal
+  recompute, HPA replay scope, and clean-checkout-safe dataset paths.
+
+Document validation:
+  python scripts/validate_docs.py
+Output:
+  DOCUMENT VALIDATION PASSED: 15 required files; 17 documents scanned
+Result: PASS
+
+Default reproduction:
+  powershell -ExecutionPolicy Bypass -File .\reproduce.ps1
+Output: REPRODUCTION COMPLETED; exit code 0
+  - 300 runs, execution mode simulation, energy modelled.
+  - 112 tests passed at that checkpoint (before the final dataset test addition;
+    the final suite has 113).
+  - All substantive generated tables were regenerated.
+  - Provenance-only files changed as expected (analysis commit/timestamps).
+
+Clean-checkout reproduction:
+  powershell -ExecutionPolicy Bypass -File .\scripts\clean_checkout_reproduction.ps1
+Clone: C:\Users\yuvaa\AppData\Local\Temp\eaes-clean-20261026T115649Z
+Commit tested: 6d35a516e4f23e8039604a8deb3062b1b5343fbe
+Output summary:
+  25 files matched, 0 differed, 0 missing, tests exit 0, reproduce exit 0.
+  RESULT: PASS - all compared committed artifacts were regenerated byte-identically.
+  Clean-clone test suite: 113 passed.
+  Clone provenance-only changes after reproduction:
+    M results/EAES_DIAGNOSTIC.md
+    M results/analysis_manifest.json
+    M results/diagnostic.json
+    M results/extension/hpa_replay/manifest.json
+  These are commit/timestamp fields, excluded from the 25-file substantive
+  comparison by design.
+Report: results/extension/clean_checkout/REPRODUCTION_REPORT.txt
+
+Crash fixes found by this phase (each committed separately):
+  - clean-checkout script resolved the repository root incorrectly;
+  - Flask __version__ deprecation warning on stderr aborted the clean clone;
+  - dataset verification required non-repository original files;
+  - dataset tests required non-repository original files.
+The clean-clone pass is evidence that these are fixed, not merely suppressed.
+
+Environment availability re-check:
+  docker version --format '{{.Server.Version}}' -> failed to connect to
+    dockerDesktopLinuxEngine
+  minikube status -> docker container inspect failed
+  kubectl config current-context -> current-context is not set
+Result: no additional cluster repetitions were possible.  The six historical
+cluster runs and the HPA replay remain the only real-cluster evidence.  This is
+reported as a limitation, not replaced with simulation or invented data.
+
+-------------------------------------------------------------------------------
+FINAL RE-CHECK - PROTECTED INPUTS AND CONFIRMATORY INTEGRITY
+-------------------------------------------------------------------------------
+Command:
+  python analysis/verify_dataset_hashes.py
+Output:
+  PASS original experiment_results_v2.json
+       6279D01DC92D9C4FBE2EBB2C5BA0C12A7DA3EA7CA985E9FA762E88A11F34234E
+  PASS data/experiment_results_v2.json
+       6279D01DC92D9C4FBE2EBB2C5BA0C12A7DA3EA7CA985E9FA762E88A11F34234E
+  PASS original experiment_results.json
+       C4BF4BFFFA8D0242395D2A2FB966C16DBC4884078BE7E82395E778EF87968451
+  PASS data/experiment_results.json
+       C4BF4BFFFA8D0242395D2A2FB966C16DBC4884078BE7E82395E778EF87968451
+Exit code: 0
+
+Confirmatory manifest re-check:
+  run_id        = v3_paired_20261025T220942Z
+  n_runs        = 300
+  git_commit    = 431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea
+  git_tracked_dirty = false
+  execution_mode = simulation
+  energy_scenario = nominal
+Result: PASS - the preserved confirmatory run is intact and was not overwritten.
+
+Final status:
+  - Application: working; three pages and research APIs verified in a browser
+    and by tests.
+  - Confirmatory analysis: generated from the preserved run, with honest
+    nonsignificance after Holm correction.
+  - Extensions: complete and explicitly separate; oracle is not deployable.
+  - Reproduction: clean-clone pass, 25/25 substantive artifacts byte-identical.
+  - Real cluster: historical single-node smoke validation only; Docker Desktop
+    and Minikube were unavailable for additional repetitions.
+  - Physical energy: never measured; all energy is modelled.
+  - Li et al. (2025): full text remained paywalled; only Crossref metadata was
+    verified, so no reproduction is claimed.

@@ -75,15 +75,19 @@ Default behavior:
 11. validate documents and references;
 12. print a summary and any working-tree changes.
 
-Expected non-byte-identical outputs after a default run:
+Expected non-byte-identical provenance outputs after a default run:
 
-- `results/analysis_manifest.json` - `analyzed_at` timestamp and possibly the
-  analysis commit;
-- `results/diagnostic.json` - generation timestamp;
-- extension `manifest.json` files if regenerated - `started_at`/`created_at`.
+- `results/analysis_manifest.json` - `analyzed_at` timestamp and the analysis
+  commit;
+- `results/diagnostic.json` - generation timestamp and analysis commit;
+- `results/EAES_DIAGNOSTIC.md` - analysis commit;
+- `results/extension/hpa_replay/manifest.json` - `created_at` when replayed.
 
-The clean-checkout comparison excludes the analysis manifest and compares the
-substantive tables, reports, SVGs, and replay outputs.
+The clean-checkout comparison deliberately excludes these provenance-only
+fields and compares 25 substantive artifacts: the generated results report,
+statistical tables, forecast tables, Pareto CSVs/SVGs, and HPA replay
+CSV/report. In the final run all 25 matched, the clean clone's tests passed, and
+the clone retained only the four provenance-file changes listed above.
 
 ## 5. Options
 
