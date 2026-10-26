@@ -25,14 +25,23 @@ def sha256(path: str) -> str:
 def main() -> int:
     failed = 0
     for name, expected in EXPECTED.items():
-        path = os.path.join(PROJECT_ROOT, name)
-        if not os.path.exists(path):
-            print(f"FAIL missing {path}")
+        original = os.path.join(PROJECT_ROOT, name)
+        copy = os.path.join(APP_DIR, "data", name)
+        if os.path.exists(original):
+            actual = sha256(original)
+            status = "PASS" if actual == expected else "FAIL"
+            print(f"{status} original {name} {actual}")
+            if actual != expected:
+                failed += 1
+        else:
+            print(f"NOTE original workspace copy not present: {original}")
+        if not os.path.exists(copy):
+            print(f"FAIL missing tracked copy {copy}")
             failed += 1
             continue
-        actual = sha256(path)
+        actual = sha256(copy)
         status = "PASS" if actual == expected else "FAIL"
-        print(f"{status} {name} {actual}")
+        print(f"{status} data/{name} {actual}")
         if actual != expected:
             failed += 1
     return 1 if failed else 0
