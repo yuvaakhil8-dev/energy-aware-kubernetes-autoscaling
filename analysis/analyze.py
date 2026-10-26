@@ -533,87 +533,17 @@ def main() -> int:
     }
     atomic_write_json(os.path.join(APP_DIR, "results", "analysis_manifest.json"), analysis_manifest)
 
-    # RESULTS.md is generated from the tables.
-    lines = [
-        "# Results (generated)",
-        "",
-        f"Run: `{manifest['run_id']}`  ",
-        f"Git commit: `{manifest['git_commit']}`  ",
-        f"Execution mode: **{manifest['execution_mode']}**  ",
-        f"Energy scenario: **{manifest['energy_scenario']}**  ",
-        f"Seeds: {len(seeds)} per workload; workloads: {', '.join(workloads)}  ",
-        f"Summaries: {len(summaries)}  ",
-        "",
-        "> All energy values are model estimates, not physical measurements. "
-        "The primary window is after the 30 s warm-up; raw logs retain every tick.",
-        "",
-        "## Primary metrics: mean [95% bootstrap CI]",
-        "",
-    ]
-    for workload in workloads:
-        lines.append(f"### {workload}")
-        lines.append("")
-        subset = [r for r in descriptive if r["workload"] == workload and r["metric"] in PRIMARY]
-        lines.append(_md_table(
-            [dict(r, mean_ci=f"{_fmt(r['mean'])} [{_fmt(r['ci_low'])}, {_fmt(r['ci_high'])}]") for r in subset],
-            [("strategy", "Strategy"), ("metric", "Metric"), ("n", "n"),
-             ("mean_ci", "Mean [95% CI]"), ("median", "Median")],
-        ))
-        lines.append("")
-    lines += [
-        "## Paired EAES comparisons (primary metrics)",
-        "",
-        _md_table(
-            [dict(r, mean_ci=f"{_fmt(r['mean_diff'])} [{_fmt(r['ci_low'])}, {_fmt(r['ci_high'])}]") for r in paired if r["primary"] and r["strategy"] == "eaes"],
-            [("workload", "Workload"), ("baseline", "Baseline"), ("metric", "Metric"),
-             ("mean_ci", "Mean diff [95% CI]"), ("p_value", "p"), ("p_holm", "Holm p"),
-             ("cliffs_delta", "Cliff's d")],
-        ),
-        "",
-        "## Friedman tests (primary metrics)",
-        "",
-        _md_table(
-            [r for r in friedman if r["metric"] in PRIMARY],
-            [("workload", "Workload"), ("metric", "Metric"), ("n_blocks", "n"),
-             ("Q", "Q"), ("p_value", "p")],
-        ),
-        "",
-        "## Forecast evaluation (held-out final 50% of each trace)",
-        "",
-    ]
-    fc_agg: Dict[Tuple[str, str], List[float]] = defaultdict(list)
-    for row in forecast_rows:
-        if row.get("mae") is not None:
-            fc_agg[(row["workload"], row["method"])].append(row["mae"])
-    fc_rows = [
-        {"workload": w, "method": m, "n": len(v), "mae": statistics.mean(v)}
-        for (w, m), v in sorted(fc_agg.items())
-    ]
-    lines.append(_md_table(fc_rows, [("workload", "Workload"), ("method", "Method"),
-                                     ("n", "n"), ("mae", "MAE (req/s)")]))
-    lines += [
-        "",
-        "## Energy sensitivity (nominal recomputation check)",
-        "",
-        f"Maximum relative difference between the raw-log recomputation and the engine's "
-        f"nominal energy: `{nominal_error:.3e}`.",
-        "",
-        "See `results/tables/sensitivity.csv` for low/nominal/high power and PUE 1.0-1.6.",
-        "",
-        "## Interpretation guardrails",
-        "",
-        "- These are paired simulation results, not cluster measurements.",
-        "- Statistical significance does not establish real-world performance.",
-        "- The static strategy can show low energy per served request while dropping a large share of traffic; read it with the drop/SLA columns.",
-        "- The HPA-formula baseline is a simulated formula, not the Kubernetes HPA controller.",
-    ]
-    with open(os.path.join(APP_DIR, "results", "RESULTS.md"), "w", encoding="utf-8") as fh:
-        fh.write("\n".join(lines) + "\n")
+    # The headline report has a single authoritative generator.  Calling it
+    # here keeps `python -m analysis.analyze` from silently overwriting the
+    # polished RESULTS.md with an older format.
+    from analysis.make_headline_table import generate as generate_headline
+    headline = generate_headline(run_dir)
 
     print(f"analyzed run: {manifest['run_id']}")
     print(f"tables: {tables}")
     print(f"nominal recomputation max rel error: {nominal_error:.3e}")
     print(f"paired rows: {len(paired)}; friedman rows: {len(friedman)}; sensitivity rows: {len(sensitivity)}")
+    print(f"headline rows: {headline['headline_rows']}; paired headline rows: {headline['paired_rows']}")
     return 0
 
 

@@ -1,0 +1,433 @@
+workload,strategy,baseline,metric,label,n_pairs,median_diff,mean_diff,ci_low,ci_high,p_value,p_holm,cliffs_delta,note,wilcoxon_stat,test_note
+steady,static,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,static,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,static,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,static,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,static,cpu_threshold,replica_hours,Replica-hours,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,static,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,static,cpu_threshold,scaling_events,Scaling events,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,static,cpu_threshold,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,hpa_formula,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,11.155667281915447,8.122701624573338,0.0,11.940008905267502,0.01796047752607878,0.03592095505215756,0.77,ok,28.0,normal_approx
+steady,hpa_formula,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,11.155667281915447,8.122701624573338,0.0,11.940008905267502,0.01796047752607878,0.03592095505215756,0.77,ok,28.0,normal_approx
+steady,hpa_formula,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,hpa_formula,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,hpa_formula,cpu_threshold,replica_hours,Replica-hours,10,0.14166666666666666,0.13833333333333334,0.07499999999999998,0.18680555555555556,0.005005074402905228,0.026256068714015476,1.0,ok,55.0,normal_approx
+steady,hpa_formula,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,hpa_formula,cpu_threshold,scaling_events,Scaling events,10,2.0,1.9,1.0,2.5,0.004376011452335913,0.026256068714015476,1.0,ok,55.0,normal_approx
+steady,hpa_formula,cpu_threshold,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,eaes,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,eaes,cpu_threshold,replica_hours,Replica-hours,10,-0.009722222222222215,-0.009861111111111116,-0.011111111111111127,-0.008333333333333331,0.004562405976690368,0.026256068714015476,-1.0,ok,0,normal_approx
+steady,eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,eaes,cpu_threshold,scaling_events,Scaling events,10,6.0,6.1,6.0,6.0,0.002281937253315449,0.02281937253315449,1.0,ok,55.0,normal_approx
+steady,eaes,cpu_threshold,oscillations,Oscillation count,10,5.0,5.1,5.0,5.0,0.002281937253315449,0.02281937253315449,1.0,ok,55.0,normal_approx
+steady,forecasting_eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,cpu_threshold,replica_hours,Replica-hours,10,-0.008333333333333331,-0.008333333333333331,-0.009722222222222215,-0.0069444444444444475,0.004481980156450957,0.026256068714015476,-1.0,ok,0,normal_approx
+steady,forecasting_eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,cpu_threshold,scaling_events,Scaling events,10,6.0,5.6,5.0,6.0,0.0029597487499663654,0.023677989999730923,1.0,ok,55.0,normal_approx
+steady,forecasting_eaes,cpu_threshold,oscillations,Oscillation count,10,5.0,4.5,4.0,5.0,0.0035803275223668597,0.02506229265656802,1.0,ok,55.0,normal_approx
+steady,static,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-11.155667281915447,-8.122701624573338,-11.940008905267502,0.0,0.01796047752607878,0.14368382020863024,-0.77,ok,0,normal_approx
+steady,static,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-11.155667281915447,-8.122701624573338,-11.871030776746458,0.0,0.01796047752607878,0.14368382020863024,-0.77,ok,0,normal_approx
+steady,static,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,static,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,static,hpa_formula,replica_hours,Replica-hours,10,-0.14166666666666666,-0.13833333333333334,-0.18680555555555556,-0.07499999999999998,0.005005074402905228,0.0700161832373746,-1.0,ok,0,normal_approx
+steady,static,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,static,hpa_formula,scaling_events,Scaling events,10,-2.0,-1.9,-2.5,-1.0,0.004376011452335913,0.0700161832373746,-1.0,ok,0,normal_approx
+steady,static,hpa_formula,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,cpu_threshold,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-11.155667281915447,-8.122701624573338,-11.940008905267502,0.0,0.01796047752607878,0.14368382020863024,-0.77,ok,0,normal_approx
+steady,cpu_threshold,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-11.155667281915447,-8.122701624573338,-11.940008905267502,0.0,0.01796047752607878,0.14368382020863024,-0.77,ok,0,normal_approx
+steady,cpu_threshold,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,cpu_threshold,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,cpu_threshold,hpa_formula,replica_hours,Replica-hours,10,-0.14166666666666666,-0.13833333333333334,-0.18680555555555556,-0.07499999999999998,0.005005074402905228,0.0700161832373746,-1.0,ok,0,normal_approx
+steady,cpu_threshold,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,cpu_threshold,hpa_formula,scaling_events,Scaling events,10,-2.0,-1.9,-2.5,-1.0,0.004376011452335913,0.0700161832373746,-1.0,ok,0,normal_approx
+steady,cpu_threshold,hpa_formula,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-11.155667281915447,-8.122701624573338,-11.871030776746458,0.0,0.01796047752607878,0.14368382020863024,-0.77,ok,0,normal_approx
+steady,eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-11.155667281915447,-8.122701624573338,-11.940008905267502,0.0,0.01796047752607878,0.14368382020863024,-0.77,ok,0,normal_approx
+steady,eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,eaes,hpa_formula,replica_hours,Replica-hours,10,-0.15069444444444444,-0.14819444444444443,-0.19375,-0.08611111111111111,0.005033508200606253,0.0700161832373746,-1.0,ok,0,normal_approx
+steady,eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,eaes,hpa_formula,scaling_events,Scaling events,10,4.0,4.2,3.5,5.0,0.004455352355471751,0.0700161832373746,1.0,ok,55.0,normal_approx
+steady,eaes,hpa_formula,oscillations,Oscillation count,10,5.0,5.1,5.0,5.0,0.002281937253315449,0.04107487055967808,1.0,ok,55.0,normal_approx
+steady,forecasting_eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-11.155667281915447,-8.122701624573338,-11.940008905267502,0.0,0.01796047752607878,0.14368382020863024,-0.77,ok,0,normal_approx
+steady,forecasting_eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-11.155667281915447,-8.122701624573338,-11.940008905267502,0.0,0.01796047752607878,0.14368382020863024,-0.77,ok,0,normal_approx
+steady,forecasting_eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,hpa_formula,replica_hours,Replica-hours,10,-0.1486111111111111,-0.14666666666666667,-0.19166666666666668,-0.0847222222222222,0.005005074402905228,0.0700161832373746,-1.0,ok,0,normal_approx
+steady,forecasting_eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,hpa_formula,scaling_events,Scaling events,10,4.0,3.7,3.0,4.5,0.004643645257632893,0.0700161832373746,1.0,ok,55.0,normal_approx
+steady,forecasting_eaes,hpa_formula,oscillations,Oscillation count,10,5.0,4.5,4.0,5.0,0.0035803275223668597,0.060865567880236615,1.0,ok,55.0,normal_approx
+steady,forecasting_eaes,eaes,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,eaes,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,eaes,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,eaes,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,eaes,replica_hours,Replica-hours,10,0.0013888888888888978,0.0015277777777777835,0.0,0.002777777777777782,0.026014479622894243,0.026014479622894243,0.52,ok,21.0,normal_approx
+steady,forecasting_eaes,eaes,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+steady,forecasting_eaes,eaes,scaling_events,Scaling events,10,0.0,-0.5,-1.0,0.0,,,-0.28,ok,,not_testable
+steady,forecasting_eaes,eaes,oscillations,Oscillation count,10,0.0,-0.6,-1.5,0.0,,,-0.37,ok,,not_testable
+light,static,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,cpu_threshold,replica_hours,Replica-hours,10,0.1298611111111111,0.12763888888888889,0.12777777777777777,0.13055555555555556,0.004402367998717294,0.03521894398973835,1.0,ok,55.0,normal_approx
+light,static,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,cpu_threshold,scaling_events,Scaling events,10,-2.0,-2.2,-2.0,-2.0,0.002281937253315449,0.02281937253315449,-1.0,ok,0,normal_approx
+light,static,cpu_threshold,oscillations,Oscillation count,10,0.0,-0.2,0.0,0.0,,,-0.1,ok,,not_testable
+light,hpa_formula,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,hpa_formula,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,hpa_formula,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,hpa_formula,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,hpa_formula,cpu_threshold,replica_hours,Replica-hours,10,0.1298611111111111,0.12763888888888889,0.12777777777777777,0.13055555555555556,0.004402367998717294,0.03521894398973835,1.0,ok,55.0,normal_approx
+light,hpa_formula,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,hpa_formula,cpu_threshold,scaling_events,Scaling events,10,-2.0,-2.2,-2.0,-2.0,0.002281937253315449,0.02281937253315449,-1.0,ok,0,normal_approx
+light,hpa_formula,cpu_threshold,oscillations,Oscillation count,10,0.0,-0.2,0.0,0.0,,,-0.1,ok,,not_testable
+light,eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,eaes,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,eaes,cpu_threshold,replica_hours,Replica-hours,10,0.010416666666666664,0.01569444444444444,0.008333333333333331,0.02500000000000001,0.004976730754213939,0.03521894398973835,0.9,ok,55.0,normal_approx
+light,eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,eaes,cpu_threshold,scaling_events,Scaling events,10,1.0,1.2,0.0,2.0,0.0163512215758059,0.04905366472741769,0.6,ok,28.0,normal_approx
+light,eaes,cpu_threshold,oscillations,Oscillation count,10,0.5,0.9,0.0,2.0,0.04122683333716371,0.08245366667432742,0.41,ok,15.0,normal_approx
+light,forecasting_eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,cpu_threshold,replica_hours,Replica-hours,10,0.017361111111111112,0.017222222222222222,0.009027777777777773,0.02500000000000001,0.004976730754213939,0.03521894398973835,0.92,ok,55.0,normal_approx
+light,forecasting_eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,cpu_threshold,scaling_events,Scaling events,10,1.0,1.3,0.5,2.0,0.010320738885786631,0.041282955543146524,0.69,ok,36.0,normal_approx
+light,forecasting_eaes,cpu_threshold,oscillations,Oscillation count,10,0.5,0.9,0.0,2.0,0.04122683333716371,0.08245366667432742,0.41,ok,15.0,normal_approx
+light,static,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,hpa_formula,replica_hours,Replica-hours,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,hpa_formula,scaling_events,Scaling events,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,static,hpa_formula,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,cpu_threshold,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,cpu_threshold,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,cpu_threshold,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,cpu_threshold,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,cpu_threshold,hpa_formula,replica_hours,Replica-hours,10,-0.1298611111111111,-0.12763888888888889,-0.13055555555555556,-0.12777777777777777,0.004402367998717294,0.030816575991021056,-1.0,ok,0,normal_approx
+light,cpu_threshold,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,cpu_threshold,hpa_formula,scaling_events,Scaling events,10,2.0,2.2,2.0,2.0,0.002281937253315449,0.01825549802652359,1.0,ok,55.0,normal_approx
+light,cpu_threshold,hpa_formula,oscillations,Oscillation count,10,0.0,0.2,0.0,0.0,,,0.1,ok,,not_testable
+light,eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,eaes,hpa_formula,replica_hours,Replica-hours,10,-0.1125,-0.11194444444444446,-0.12222222222222223,-0.10277777777777777,0.00480856307856136,0.030816575991021056,-1.0,ok,0,normal_approx
+light,eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,eaes,hpa_formula,scaling_events,Scaling events,10,3.5,3.4,2.0,4.5,0.004780851001183848,0.030816575991021056,1.0,ok,55.0,normal_approx
+light,eaes,hpa_formula,oscillations,Oscillation count,10,0.5,1.1,0.0,2.5,0.04122683333716371,0.08245366667432742,0.5,ok,15.0,normal_approx
+light,forecasting_eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,hpa_formula,replica_hours,Replica-hours,10,-0.10625000000000001,-0.11041666666666668,-0.12083333333333335,-0.10277777777777777,0.004892240901835036,0.030816575991021056,-1.0,ok,0,normal_approx
+light,forecasting_eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,hpa_formula,scaling_events,Scaling events,10,3.5,3.5,2.5,4.5,0.004780851001183848,0.030816575991021056,1.0,ok,55.0,normal_approx
+light,forecasting_eaes,hpa_formula,oscillations,Oscillation count,10,0.5,1.1,0.0,2.5,0.04122683333716371,0.08245366667432742,0.5,ok,15.0,normal_approx
+light,forecasting_eaes,eaes,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,eaes,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,eaes,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,eaes,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,eaes,replica_hours,Replica-hours,10,0.0,0.0015277777777777779,0.0,0.0,,,0.07,ok,,not_testable
+light,forecasting_eaes,eaes,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+light,forecasting_eaes,eaes,scaling_events,Scaling events,10,0.0,0.1,0.0,0.0,,,0.05,ok,,not_testable
+light,forecasting_eaes,eaes,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,static,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,static,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,static,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,static,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,static,cpu_threshold,replica_hours,Replica-hours,10,-0.07499999999999998,-0.07499999999999998,-0.07499999999999998,-0.07499999999999998,0.0015654022580025523,0.025046436128040837,-1.0,ok,0,normal_approx
+medium,static,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,static,cpu_threshold,scaling_events,Scaling events,10,-1.0,-1.0,-1.0,-1.0,0.0015654022580025523,0.025046436128040837,-1.0,ok,0,normal_approx
+medium,static,cpu_threshold,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,hpa_formula,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,14.424579093658144,14.472313440561905,14.274521262086523,14.638149257224022,0.00506203212626787,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,hpa_formula,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,14.424579093658144,14.472313440561905,14.274521262086523,14.658563890496826,0.00506203212626787,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,hpa_formula,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,hpa_formula,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,hpa_formula,cpu_threshold,replica_hours,Replica-hours,10,0.45,0.45,0.45,0.45,0.0015654022580025523,0.025046436128040837,1.0,ok,55.0,normal_approx
+medium,hpa_formula,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,hpa_formula,cpu_threshold,scaling_events,Scaling events,10,2.0,2.1,2.0,2.0,0.002281937253315449,0.029665184293100836,1.0,ok,55.0,normal_approx
+medium,hpa_formula,cpu_threshold,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,3.064198152525748,3.2253043333520375,2.582052172882154,4.078806668873092,0.00506203212626787,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,3.064198152525748,3.2253043333520375,2.627022211419945,4.078806668873092,0.00506203212626787,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,eaes,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,eaes,cpu_threshold,replica_hours,Replica-hours,10,0.03472222222222221,0.035277777777777776,0.025694444444444436,0.04583333333333334,0.004976730754213939,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,eaes,cpu_threshold,scaling_events,Scaling events,10,5.0,5.4,4.5,6.5,0.004698256572511804,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,eaes,cpu_threshold,oscillations,Oscillation count,10,4.0,4.0,3.0,5.0,0.004725697734121448,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,forecasting_eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,3.1841987828786706,3.361874600756175,2.9649595687331534,4.130690568475163,0.00506203212626787,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,forecasting_eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,3.1841987828786706,3.361874600756175,2.9649595687331534,4.130690568475163,0.00506203212626787,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,forecasting_eaes,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,forecasting_eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,forecasting_eaes,cpu_threshold,replica_hours,Replica-hours,10,0.03541666666666668,0.03763888888888889,0.032638888888888884,0.04722222222222222,0.005005074402905228,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,forecasting_eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,forecasting_eaes,cpu_threshold,scaling_events,Scaling events,10,5.0,5.0,4.0,6.0,0.00480856307856136,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,forecasting_eaes,cpu_threshold,oscillations,Oscillation count,10,4.0,3.9,3.0,5.0,0.00480856307856136,0.05637907887014165,1.0,ok,55.0,normal_approx
+medium,static,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-14.424579093658144,-14.472313440561905,-14.658563890496826,-14.274521262086523,0.00506203212626787,0.062374932976604514,-1.0,ok,0,normal_approx
+medium,static,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-14.424579093658144,-14.472313440561905,-14.658563890496826,-14.274521262086523,0.00506203212626787,0.062374932976604514,-1.0,ok,0,normal_approx
+medium,static,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,static,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,static,hpa_formula,replica_hours,Replica-hours,10,-0.525,-0.525,-0.525,-0.525,0.0015654022580025523,0.02817724064404594,-1.0,ok,0,normal_approx
+medium,static,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,static,hpa_formula,scaling_events,Scaling events,10,-3.0,-3.1,-3.0,-3.0,0.002281937253315449,0.03651099605304718,-1.0,ok,0,normal_approx
+medium,static,hpa_formula,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,cpu_threshold,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-14.424579093658144,-14.472313440561905,-14.658563890496826,-14.274521262086523,0.00506203212626787,0.062374932976604514,-1.0,ok,0,normal_approx
+medium,cpu_threshold,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-14.424579093658144,-14.472313440561905,-14.658563890496826,-14.276910253369474,0.00506203212626787,0.062374932976604514,-1.0,ok,0,normal_approx
+medium,cpu_threshold,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,cpu_threshold,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,cpu_threshold,hpa_formula,replica_hours,Replica-hours,10,-0.45,-0.45,-0.45,-0.45,0.0015654022580025523,0.02817724064404594,-1.0,ok,0,normal_approx
+medium,cpu_threshold,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,cpu_threshold,hpa_formula,scaling_events,Scaling events,10,-2.0,-2.1,-2.0,-2.0,0.002281937253315449,0.03651099605304718,-1.0,ok,0,normal_approx
+medium,cpu_threshold,hpa_formula,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-11.324210563682117,-11.247009107209868,-12.084899780718592,-10.194174757281552,0.00506203212626787,0.062374932976604514,-1.0,ok,0,normal_approx
+medium,eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-11.324210563682117,-11.247009107209868,-12.001828539087064,-10.194174757281552,0.00506203212626787,0.062374932976604514,-1.0,ok,0,normal_approx
+medium,eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,eaes,hpa_formula,replica_hours,Replica-hours,10,-0.4152777777777778,-0.4147222222222222,-0.4243055555555556,-0.40347222222222223,0.004976730754213939,0.062374932976604514,-1.0,ok,0,normal_approx
+medium,eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,eaes,hpa_formula,scaling_events,Scaling events,10,3.0,3.3,2.5,4.0,0.004455352355471751,0.062374932976604514,1.0,ok,55.0,normal_approx
+medium,eaes,hpa_formula,oscillations,Oscillation count,10,4.0,4.0,3.0,5.0,0.004725697734121448,0.062374932976604514,1.0,ok,55.0,normal_approx
+medium,forecasting_eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-11.25739541891597,-11.110438839805731,-11.590296495956874,-10.194174757281552,0.00506203212626787,0.062374932976604514,-1.0,ok,0,normal_approx
+medium,forecasting_eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-11.25739541891597,-11.110438839805731,-11.603836860743026,-10.194174757281552,0.00506203212626787,0.062374932976604514,-1.0,ok,0,normal_approx
+medium,forecasting_eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,forecasting_eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,forecasting_eaes,hpa_formula,replica_hours,Replica-hours,10,-0.4145833333333333,-0.4123611111111111,-0.4173611111111111,-0.4027777777777778,0.005005074402905228,0.062374932976604514,-1.0,ok,0,normal_approx
+medium,forecasting_eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,forecasting_eaes,hpa_formula,scaling_events,Scaling events,10,3.0,2.9,2.0,4.0,0.00486425804517504,0.062374932976604514,0.99,ok,55.0,normal_approx
+medium,forecasting_eaes,hpa_formula,oscillations,Oscillation count,10,4.0,3.9,3.0,5.0,0.00480856307856136,0.062374932976604514,1.0,ok,55.0,normal_approx
+medium,forecasting_eaes,eaes,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.13657026740413764,0.0,0.13497327227897493,,,0.14,ok,,not_testable
+medium,forecasting_eaes,eaes,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.13657026740413764,0.0,0.13363028953229517,,,0.14,ok,,not_testable
+medium,forecasting_eaes,eaes,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,forecasting_eaes,eaes,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,forecasting_eaes,eaes,replica_hours,Replica-hours,10,0.001388888888888884,0.0023611111111111137,0.0,0.002777777777777768,0.026856695507524436,0.026856695507524436,0.15,ok,21.0,normal_approx
+medium,forecasting_eaes,eaes,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+medium,forecasting_eaes,eaes,scaling_events,Scaling events,10,0.0,-0.4,-1.0,0.0,,,-0.2,ok,,not_testable
+medium,forecasting_eaes,eaes,oscillations,Oscillation count,10,0.0,-0.1,0.0,0.0,,,-0.06,ok,,not_testable
+heavy,static,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,-0.8840196133058438,-0.894417446768253,-0.9661002859070944,-0.8265549375135457,0.00506203212626787,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,static,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,-7.789186973446432,-7.787742011845435,-7.8316043249561655,-7.7607293751389825,0.00506203212626787,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,static,cpu_threshold,drop_rate,Request drop rate,10,0.38790680388471277,0.3874041931697885,0.37947762031930354,0.39478337754199827,0.00506203212626787,0.1174564143127951,1.0,ok,55.0,normal_approx
+heavy,static,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.678248310493154,0.6798298201784801,0.6744377450465733,0.6911842603102535,0.00506203212626787,0.1174564143127951,1.0,ok,55.0,normal_approx
+heavy,static,cpu_threshold,replica_hours,Replica-hours,10,-0.28402777777777777,-0.28125,-0.2965277777777778,-0.26249999999999996,0.004780851001183848,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,static,cpu_threshold,p95_latency_ms,P95 latency (ms),10,3432.000000000029,3365.7000000000266,2379.000000000022,3900.0000000000364,0.005005074402905228,0.1174564143127951,1.0,ok,55.0,normal_approx
+heavy,static,cpu_threshold,scaling_events,Scaling events,10,-5.0,-4.6,-5.0,-4.0,0.0038678686666597066,0.10830032266647178,-1.0,ok,0,normal_approx
+heavy,static,cpu_threshold,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,hpa_formula,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,3.936309554747094,3.943104516062731,3.8975898047025233,3.9729632537211845,0.00506203212626787,0.1174564143127951,1.0,ok,55.0,normal_approx
+heavy,hpa_formula,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,3.6099176955509904,3.6153848183904804,3.5652013298854826,3.653030536494734,0.00506203212626787,0.1174564143127951,1.0,ok,55.0,normal_approx
+heavy,hpa_formula,cpu_threshold,drop_rate,Request drop rate,10,-0.010023453212915496,-0.010511253339601246,-0.012327530370907967,-0.00868861972269313,0.00506203212626787,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,hpa_formula,cpu_threshold,sla_violation_rate,SLA violation rate,10,-0.32175168950684596,-0.3201701798215199,-0.3255622549534267,-0.3088157396897465,0.00506203212626787,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,hpa_formula,cpu_threshold,replica_hours,Replica-hours,10,0.24097222222222225,0.24375000000000002,0.22847222222222224,0.2625,0.004780851001183848,0.1174564143127951,1.0,ok,55.0,normal_approx
+heavy,hpa_formula,cpu_threshold,p95_latency_ms,P95 latency (ms),10,-26567.99999999997,-26634.299999999974,-27620.999999999978,-26099.999999999964,0.005005074402905228,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,hpa_formula,cpu_threshold,scaling_events,Scaling events,10,3.0,3.2,2.0,4.5,0.004698256572511804,0.1174564143127951,1.0,ok,55.0,normal_approx
+heavy,hpa_formula,cpu_threshold,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,1.1114362645268656,1.183752587109075,0.3459385652761462,1.754932520312476,0.00506203212626787,0.1174564143127951,1.0,ok,55.0,normal_approx
+heavy,eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.7683920311950114,0.8560328894368243,0.03746942406048248,1.4365605658709093,0.0069104298078148056,0.1174564143127951,0.72,ok,54.0,normal_approx
+heavy,eaes,cpu_threshold,drop_rate,Request drop rate,10,-0.010023453212915496,-0.010511253339601246,-0.012327530370907967,-0.00868861972269313,0.00506203212626787,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,-0.32175168950684596,-0.3201701798215199,-0.3255622549534267,-0.3088157396897465,0.00506203212626787,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,eaes,cpu_threshold,replica_hours,Replica-hours,10,0.09722222222222227,0.1038888888888889,0.09374999999999997,0.1166666666666667,0.004948477274859328,0.1174564143127951,1.0,ok,55.0,normal_approx
+heavy,eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,-26567.99999999997,-26634.299999999974,-27620.999999999978,-26099.999999999964,0.005005074402905228,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,eaes,cpu_threshold,scaling_events,Scaling events,10,3.0,3.6,3.0,5.0,0.003510470737424284,0.10531412212272852,1.0,ok,55.0,normal_approx
+heavy,eaes,cpu_threshold,oscillations,Oscillation count,10,6.0,5.4,4.5,6.0,0.0040667863251203,0.10980323077824809,1.0,ok,55.0,normal_approx
+heavy,forecasting_eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,1.4044802193195896,1.2576607618011244,0.3459385652761462,1.8015238303780698,0.00506203212626787,0.1174564143127951,1.0,ok,55.0,normal_approx
+heavy,forecasting_eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,1.034220776580817,0.9299410641288738,0.03746942406048248,1.4680851063829792,0.0069104298078148056,0.1174564143127951,0.72,ok,54.0,normal_approx
+heavy,forecasting_eaes,cpu_threshold,drop_rate,Request drop rate,10,-0.010023453212915496,-0.010511253339601246,-0.012327530370907967,-0.00868861972269313,0.00506203212626787,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,forecasting_eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,-0.32175168950684596,-0.3201701798215199,-0.3255622549534267,-0.3088157396897465,0.00506203212626787,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,forecasting_eaes,cpu_threshold,replica_hours,Replica-hours,10,0.10416666666666666,0.10638888888888892,0.09722222222222224,0.11875000000000005,0.005033508200606253,0.1174564143127951,1.0,ok,55.0,normal_approx
+heavy,forecasting_eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,-26567.99999999997,-26634.299999999974,-27620.999999999978,-26099.999999999964,0.005005074402905228,0.1174564143127951,-1.0,ok,0,normal_approx
+heavy,forecasting_eaes,cpu_threshold,scaling_events,Scaling events,10,3.0,3.6,3.0,5.0,0.003510470737424284,0.10531412212272852,1.0,ok,55.0,normal_approx
+heavy,forecasting_eaes,cpu_threshold,oscillations,Oscillation count,10,5.5,5.2,4.0,6.0,0.004376011452335913,0.11377629776073372,1.0,ok,55.0,normal_approx
+heavy,static,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-4.8124167657500525,-4.8375219628309845,-4.9361299697029555,-4.732963003083569,0.00506203212626787,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,static,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-11.401034730479171,-11.403126830235916,-11.411344164141912,-11.394413583590298,0.00506203212626787,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,static,hpa_formula,drop_rate,Request drop rate,10,0.3993101796805527,0.39791544650938976,0.3924372239053914,0.40372427760646845,0.00506203212626787,0.08822925989502498,1.0,ok,55.0,normal_approx
+heavy,static,hpa_formula,sla_violation_rate,SLA violation rate,10,1.0,1.0,1.0,1.0,0.0015654022580025523,0.03756965419206126,1.0,ok,55.0,normal_approx
+heavy,static,hpa_formula,replica_hours,Replica-hours,10,-0.525,-0.525,-0.525,-0.525,0.0015654022580025523,0.03756965419206126,-1.0,ok,0,normal_approx
+heavy,static,hpa_formula,p95_latency_ms,P95 latency (ms),10,30000.0,30000.0,30000.0,30000.0,0.0015654022580025523,0.03756965419206126,1.0,ok,55.0,normal_approx
+heavy,static,hpa_formula,scaling_events,Scaling events,10,-7.5,-7.8,-9.0,-7.0,0.004643645257632893,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,static,hpa_formula,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,cpu_threshold,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-3.936309554747094,-3.943104516062731,-3.9691809573914902,-3.8975898047025233,0.00506203212626787,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,cpu_threshold,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-3.6099176955509904,-3.6153848183904804,-3.6579886845337004,-3.5652013298854826,0.00506203212626787,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,cpu_threshold,hpa_formula,drop_rate,Request drop rate,10,0.010023453212915496,0.010511253339601246,0.00868861972269313,0.012327530370907967,0.00506203212626787,0.08822925989502498,1.0,ok,55.0,normal_approx
+heavy,cpu_threshold,hpa_formula,sla_violation_rate,SLA violation rate,10,0.32175168950684596,0.3201701798215199,0.3088157396897465,0.3255622549534267,0.00506203212626787,0.08822925989502498,1.0,ok,55.0,normal_approx
+heavy,cpu_threshold,hpa_formula,replica_hours,Replica-hours,10,-0.24097222222222225,-0.24375000000000002,-0.2625,-0.22916666666666669,0.004780851001183848,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,cpu_threshold,hpa_formula,p95_latency_ms,P95 latency (ms),10,26567.99999999997,26634.299999999974,26099.999999999964,27620.999999999978,0.005005074402905228,0.08822925989502498,1.0,ok,55.0,normal_approx
+heavy,cpu_threshold,hpa_formula,scaling_events,Scaling events,10,-3.0,-3.2,-4.5,-2.0,0.004698256572511804,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,cpu_threshold,hpa_formula,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-2.8408399598134686,-2.7593519289536563,-3.590690801625417,-2.1220159151193627,0.00506203212626787,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-2.8408399598134686,-2.7593519289536563,-3.590690801625417,-2.1220159151193627,0.00506203212626787,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,eaes,hpa_formula,replica_hours,Replica-hours,10,-0.14027777777777778,-0.1398611111111111,-0.16527777777777775,-0.125,0.00492031398444252,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,eaes,hpa_formula,scaling_events,Scaling events,10,0.5,0.4,-0.5,1.0,0.2059032107320683,0.4118064214641366,0.17,ok,21.0,normal_approx
+heavy,eaes,hpa_formula,oscillations,Oscillation count,10,6.0,5.4,4.5,6.0,0.0040667863251203,0.0854025128275263,1.0,ok,55.0,normal_approx
+heavy,forecasting_eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-2.6049425054590216,-2.6854437542616068,-3.590690801625417,-2.1220159151193627,0.00506203212626787,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,forecasting_eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-2.6049425054590216,-2.6854437542616068,-3.590690801625417,-2.1220159151193627,0.00506203212626787,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,forecasting_eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,forecasting_eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,forecasting_eaes,hpa_formula,replica_hours,Replica-hours,10,-0.13263888888888886,-0.1373611111111111,-0.16388888888888886,-0.12361111111111112,0.005005074402905228,0.08822925989502498,-1.0,ok,0,normal_approx
+heavy,forecasting_eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,forecasting_eaes,hpa_formula,scaling_events,Scaling events,10,0.5,0.4,-0.5,1.0,0.2059032107320683,0.4118064214641366,0.17,ok,21.0,normal_approx
+heavy,forecasting_eaes,hpa_formula,oscillations,Oscillation count,10,5.5,5.2,4.0,6.0,0.004376011452335913,0.08752022904671825,1.0,ok,55.0,normal_approx
+heavy,forecasting_eaes,eaes,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0739081746920494,0.0,0.0,,,0.09,ok,,not_testable
+heavy,forecasting_eaes,eaes,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0739081746920494,0.0,0.0,,,0.09,ok,,not_testable
+heavy,forecasting_eaes,eaes,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,forecasting_eaes,eaes,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,forecasting_eaes,eaes,replica_hours,Replica-hours,10,0.0,0.0025000000000000135,0.0,0.0020833333333333814,,,0.19,ok,,not_testable
+heavy,forecasting_eaes,eaes,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,forecasting_eaes,eaes,scaling_events,Scaling events,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+heavy,forecasting_eaes,eaes,oscillations,Oscillation count,10,0.0,-0.2,0.0,0.0,,,-0.12,ok,,not_testable
+variable,static,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,static,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,static,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,static,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,-0.009385342789598109,0.0,0.0,,,-0.1,ok,,not_testable
+variable,static,cpu_threshold,replica_hours,Replica-hours,10,-0.036805555555555564,-0.03319444444444445,-0.03819444444444445,-0.03472222222222224,0.006693593411311267,0.049203139844425196,-0.8,ok,1.0,normal_approx
+variable,static,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,-91.49999999999949,0.0,0.0,,,-0.1,ok,,not_testable
+variable,static,cpu_threshold,scaling_events,Scaling events,10,-5.0,-5.0,-5.0,-5.0,0.0015654022580025523,0.025046436128040837,-1.0,ok,0,normal_approx
+variable,static,cpu_threshold,oscillations,Oscillation count,10,-4.0,-3.8,-4.0,-4.0,0.002281937253315449,0.03422905879973173,-1.0,ok,0,normal_approx
+variable,hpa_formula,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,22.68922522147485,22.676868339255897,22.48949089210649,22.884437903768927,0.00506203212626787,0.049203139844425196,1.0,ok,55.0,normal_approx
+variable,hpa_formula,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,22.68922522147485,22.676868339255897,22.48949089210649,22.863103803695644,0.00506203212626787,0.049203139844425196,1.0,ok,55.0,normal_approx
+variable,hpa_formula,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,hpa_formula,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,-0.009385342789598109,0.0,0.0,,,-0.1,ok,,not_testable
+variable,hpa_formula,cpu_threshold,replica_hours,Replica-hours,10,0.4847222222222222,0.4676388888888889,0.4152777777777778,0.48819444444444443,0.005005074402905228,0.049203139844425196,1.0,ok,55.0,normal_approx
+variable,hpa_formula,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,-91.49999999999949,0.0,0.0,,,-0.1,ok,,not_testable
+variable,hpa_formula,cpu_threshold,scaling_events,Scaling events,10,-1.0,-1.4,-2.0,-1.0,0.0038678686666597066,0.04254655533325677,-1.0,ok,0,normal_approx
+variable,hpa_formula,cpu_threshold,oscillations,Oscillation count,10,-4.0,-3.8,-4.0,-4.0,0.002281937253315449,0.03422905879973173,-1.0,ok,0,normal_approx
+variable,eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,1.1340206185567006,1.1521594102912605,0.0,2.3050058207217674,0.04311444678307538,0.12934334034922615,0.61,ok,15.0,normal_approx
+variable,eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,1.1340206185567006,1.1521594102912605,0.0,2.3050058207217674,0.04311444678307538,0.12934334034922615,0.61,ok,15.0,normal_approx
+variable,eaes,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,0.002493087159097386,0.0,0.030593180756655767,,,0.17,ok,,not_testable
+variable,eaes,cpu_threshold,replica_hours,Replica-hours,10,0.013194444444444425,0.017083333333333332,-0.00347222222222221,0.03194444444444444,0.138294290925195,0.138294290925195,0.2,ok,35.0,normal_approx
+variable,eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,-91.49999999999949,0.0,0.0,,,-0.1,ok,,not_testable
+variable,eaes,cpu_threshold,scaling_events,Scaling events,10,4.0,3.7,3.5,4.0,0.002980704620206845,0.03847673374956275,1.0,ok,55.0,normal_approx
+variable,eaes,cpu_threshold,oscillations,Oscillation count,10,0.0,0.1,0.0,0.0,,,0.01,ok,,not_testable
+variable,forecasting_eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,5.4870651777868265,4.960051469997946,3.6213017751479306,5.807594184232036,0.00506203212626787,0.049203139844425196,1.0,ok,55.0,normal_approx
+variable,forecasting_eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,5.4870651777868265,4.960051469997946,3.6213017751479306,5.785376210908126,0.00506203212626787,0.049203139844425196,1.0,ok,55.0,normal_approx
+variable,forecasting_eaes,cpu_threshold,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,forecasting_eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0,-0.009385342789598109,0.0,0.0,,,-0.1,ok,,not_testable
+variable,forecasting_eaes,cpu_threshold,replica_hours,Replica-hours,10,0.06944444444444442,0.06388888888888887,0.03749999999999998,0.07083333333333333,0.00492031398444252,0.049203139844425196,1.0,ok,55.0,normal_approx
+variable,forecasting_eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,0.0,-91.49999999999949,0.0,0.0,,,-0.1,ok,,not_testable
+variable,forecasting_eaes,cpu_threshold,scaling_events,Scaling events,10,5.0,4.6,4.0,5.0,0.0029597487499663654,0.03847673374956275,1.0,ok,55.0,normal_approx
+variable,forecasting_eaes,cpu_threshold,oscillations,Oscillation count,10,0.0,0.2,0.0,0.0,,,0.1,ok,,not_testable
+variable,static,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-22.68922522147485,-22.676868339255897,-22.884437903768927,-22.48949089210649,0.00506203212626787,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,static,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-22.68922522147485,-22.676868339255897,-22.884437903768927,-22.48949089210649,0.00506203212626787,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,static,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,static,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,static,hpa_formula,replica_hours,Replica-hours,10,-0.5215277777777778,-0.5008333333333334,-0.525,-0.45000000000000007,0.00486425804517504,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,static,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,static,hpa_formula,scaling_events,Scaling events,10,-4.0,-3.6,-4.0,-3.0,0.0038678686666597066,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,static,hpa_formula,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,cpu_threshold,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-22.68922522147485,-22.676868339255897,-22.863103803695644,-22.48949089210649,0.00506203212626787,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,cpu_threshold,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-22.68922522147485,-22.676868339255897,-22.863103803695644,-22.48949089210649,0.00506203212626787,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,cpu_threshold,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,cpu_threshold,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.009385342789598109,0.0,0.0,,,0.1,ok,,not_testable
+variable,cpu_threshold,hpa_formula,replica_hours,Replica-hours,10,-0.4847222222222222,-0.4676388888888889,-0.4888888888888889,-0.4152777777777778,0.005005074402905228,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,cpu_threshold,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,91.49999999999949,0.0,0.0,,,0.1,ok,,not_testable
+variable,cpu_threshold,hpa_formula,scaling_events,Scaling events,10,1.0,1.4,1.0,2.0,0.0038678686666597066,0.061885898666555306,1.0,ok,55.0,normal_approx
+variable,cpu_threshold,hpa_formula,oscillations,Oscillation count,10,4.0,3.8,4.0,4.0,0.002281937253315449,0.04107487055967808,1.0,ok,55.0,normal_approx
+variable,eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-21.56389438222346,-21.524708928964635,-22.74748420313597,-20.31762667167122,0.00506203212626787,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-21.56389438222346,-21.524708928964635,-22.74748420313597,-20.31762667167122,0.00506203212626787,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.011878429948695495,0.0,0.030593180756655767,,,0.3,ok,,not_testable
+variable,eaes,hpa_formula,replica_hours,Replica-hours,10,-0.45625,-0.45055555555555554,-0.47152777777777777,-0.41666666666666674,0.005033508200606253,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,eaes,hpa_formula,scaling_events,Scaling events,10,5.0,5.1,4.5,6.0,0.004508698364904234,0.061885898666555306,1.0,ok,55.0,normal_approx
+variable,eaes,hpa_formula,oscillations,Oscillation count,10,4.0,3.9,4.0,4.0,0.002281937253315449,0.04107487055967808,1.0,ok,55.0,normal_approx
+variable,forecasting_eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-16.99725063780249,-17.716816869257947,-19.17159763313609,-16.770473883875948,0.00506203212626787,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,forecasting_eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-16.99725063780249,-17.716816869257947,-19.17159763313609,-16.770473883875948,0.00506203212626787,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,forecasting_eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,forecasting_eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,forecasting_eaes,hpa_formula,replica_hours,Replica-hours,10,-0.41250000000000003,-0.40375,-0.41944444444444445,-0.3791666666666667,0.005033508200606253,0.061885898666555306,-1.0,ok,0,normal_approx
+variable,forecasting_eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,forecasting_eaes,hpa_formula,scaling_events,Scaling events,10,6.0,6.0,5.5,7.0,0.004402367998717294,0.061885898666555306,1.0,ok,55.0,normal_approx
+variable,forecasting_eaes,hpa_formula,oscillations,Oscillation count,10,4.0,4.0,4.0,4.0,0.0015654022580025523,0.029742642902048495,1.0,ok,55.0,normal_approx
+variable,forecasting_eaes,eaes,energy_per_served_request_j,Estimated energy / served request (J),10,3.361366699477756,3.807892059706686,3.092783505154639,4.645969769544955,0.00506203212626787,0.020020297611620913,1.0,ok,55.0,normal_approx
+variable,forecasting_eaes,eaes,energy_per_offered_request_j,Estimated energy / offered request (J),10,3.361366699477756,3.807892059706686,3.092783505154639,4.522457961109005,0.00506203212626787,0.020020297611620913,1.0,ok,55.0,normal_approx
+variable,forecasting_eaes,eaes,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,forecasting_eaes,eaes,sla_violation_rate,SLA violation rate,10,0.0,-0.011878429948695495,-0.030593180756655767,0.0,,,-0.3,ok,,not_testable
+variable,forecasting_eaes,eaes,replica_hours,Replica-hours,10,0.04305555555555554,0.046805555555555545,0.036111111111111094,0.05902777777777776,0.005005074402905228,0.020020297611620913,1.0,ok,55.0,normal_approx
+variable,forecasting_eaes,eaes,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+variable,forecasting_eaes,eaes,scaling_events,Scaling events,10,1.0,0.9,0.0,1.5,0.04573702261703864,0.04573702261703864,0.66,ok,46.0,normal_approx
+variable,forecasting_eaes,eaes,oscillations,Oscillation count,10,0.0,0.1,0.0,0.0,,,0.1,ok,,not_testable
+bursty,static,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,-1.9329532537802532,-1.916139621582743,-1.9933953432438258,-1.8391302134072092,0.00506203212626787,0.10124064252535739,-1.0,ok,0,normal_approx
+bursty,static,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,-9.158392689695898,-9.17804155585644,-9.218244240493068,-9.132455779514604,0.00506203212626787,0.10124064252535739,-1.0,ok,0,normal_approx
+bursty,static,cpu_threshold,drop_rate,Request drop rate,10,0.34407797129980433,0.3464082516980043,0.34233149941787777,0.3526641550053821,0.00506203212626787,0.10124064252535739,1.0,ok,55.0,normal_approx
+bursty,static,cpu_threshold,sla_violation_rate,SLA violation rate,10,0.0853945607748246,0.0929213540243508,0.08160217243720302,0.10850435617635062,0.00506203212626787,0.10124064252535739,1.0,ok,55.0,normal_approx
+bursty,static,cpu_threshold,replica_hours,Replica-hours,10,-0.225,-0.225,-0.225,-0.225,0.0015654022580025523,0.046962067740076566,-1.0,ok,0,normal_approx
+bursty,static,cpu_threshold,p95_latency_ms,P95 latency (ms),10,5046.875000000013,4962.1250000000155,4722.500000000022,5335.000000000015,0.00506203212626787,0.10124064252535739,1.0,ok,55.0,normal_approx
+bursty,static,cpu_threshold,scaling_events,Scaling events,10,-5.0,-5.0,-5.0,-5.0,0.0015654022580025523,0.046962067740076566,-1.0,ok,0,normal_approx
+bursty,static,cpu_threshold,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,hpa_formula,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,7.3866601017070685,7.416046337573917,7.329243781707264,7.5012601104831536,0.00506203212626787,0.10124064252535739,1.0,ok,55.0,normal_approx
+bursty,hpa_formula,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,8.045691211790075,8.04257065720773,7.955213118585492,8.107365415541864,0.00506203212626787,0.10124064252535739,1.0,ok,55.0,normal_approx
+bursty,hpa_formula,cpu_threshold,drop_rate,Request drop rate,10,-0.034817940120910544,-0.0339294904812308,-0.038394793703641406,-0.028838231255149685,0.00506203212626787,0.10124064252535739,-1.0,ok,0,normal_approx
+bursty,hpa_formula,cpu_threshold,sla_violation_rate,SLA violation rate,10,-0.756646301936738,-0.748254726369395,-0.7607530575786725,-0.7332377896207682,0.00506203212626787,0.10124064252535739,-1.0,ok,0,normal_approx
+bursty,hpa_formula,cpu_threshold,replica_hours,Replica-hours,10,0.3,0.3,0.3,0.3,0.0015654022580025523,0.046962067740076566,1.0,ok,55.0,normal_approx
+bursty,hpa_formula,cpu_threshold,p95_latency_ms,P95 latency (ms),10,-24953.124999999985,-25037.874999999985,-25277.499999999978,-24664.999999999985,0.00506203212626787,0.10124064252535739,-1.0,ok,0,normal_approx
+bursty,hpa_formula,cpu_threshold,scaling_events,Scaling events,10,16.0,16.0,16.0,16.0,0.0015654022580025523,0.046962067740076566,1.0,ok,55.0,normal_approx
+bursty,hpa_formula,cpu_threshold,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,6.404237707999185,6.431023241924603,6.357198809337305,6.50086602607529,0.00506203212626787,0.10124064252535739,1.0,ok,55.0,normal_approx
+bursty,eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,7.053558471005601,7.057547561558415,6.9924432548447,7.11408365499403,0.00506203212626787,0.10124064252535739,1.0,ok,55.0,normal_approx
+bursty,eaes,cpu_threshold,drop_rate,Request drop rate,10,-0.034817940120910544,-0.0339294904812308,-0.038394793703641406,-0.028838231255149685,0.00506203212626787,0.10124064252535739,-1.0,ok,0,normal_approx
+bursty,eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,-0.7531576683641765,-0.7312691086380332,-0.7594025797691786,-0.7057853511062251,0.00506203212626787,0.10124064252535739,-1.0,ok,0,normal_approx
+bursty,eaes,cpu_threshold,replica_hours,Replica-hours,10,0.26666666666666666,0.26666666666666666,0.26666666666666666,0.26666666666666666,0.0015654022580025523,0.046962067740076566,1.0,ok,55.0,normal_approx
+bursty,eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,-24712.687499999985,-24720.737499999985,-25013.24999999998,-24323.74999999999,0.00506203212626787,0.10124064252535739,-1.0,ok,0,normal_approx
+bursty,eaes,cpu_threshold,scaling_events,Scaling events,10,2.0,2.0,2.0,2.0,0.0015654022580025523,0.046962067740076566,1.0,ok,55.0,normal_approx
+bursty,eaes,cpu_threshold,oscillations,Oscillation count,10,4.0,4.0,4.0,4.0,0.0015654022580025523,0.046962067740076566,1.0,ok,55.0,normal_approx
+bursty,forecasting_eaes,cpu_threshold,energy_per_served_request_j,Estimated energy / served request (J),10,6.404237707999185,6.431023241924603,6.350142604294849,6.503537681506751,0.00506203212626787,0.10124064252535739,1.0,ok,55.0,normal_approx
+bursty,forecasting_eaes,cpu_threshold,energy_per_offered_request_j,Estimated energy / offered request (J),10,7.053558471005601,7.057547561558415,6.982673818055831,7.11408365499403,0.00506203212626787,0.10124064252535739,1.0,ok,55.0,normal_approx
+bursty,forecasting_eaes,cpu_threshold,drop_rate,Request drop rate,10,-0.034817940120910544,-0.0339294904812308,-0.038394793703641406,-0.028838231255149685,0.00506203212626787,0.10124064252535739,-1.0,ok,0,normal_approx
+bursty,forecasting_eaes,cpu_threshold,sla_violation_rate,SLA violation rate,10,-0.7531576683641765,-0.7312691086380332,-0.7594025797691786,-0.7057853511062251,0.00506203212626787,0.10124064252535739,-1.0,ok,0,normal_approx
+bursty,forecasting_eaes,cpu_threshold,replica_hours,Replica-hours,10,0.26666666666666666,0.26666666666666666,0.26666666666666666,0.26666666666666666,0.0015654022580025523,0.046962067740076566,1.0,ok,55.0,normal_approx
+bursty,forecasting_eaes,cpu_threshold,p95_latency_ms,P95 latency (ms),10,-24712.687499999985,-24720.737499999985,-25074.687499999978,-24318.937499999985,0.00506203212626787,0.10124064252535739,-1.0,ok,0,normal_approx
+bursty,forecasting_eaes,cpu_threshold,scaling_events,Scaling events,10,2.0,2.0,2.0,2.0,0.0015654022580025523,0.046962067740076566,1.0,ok,55.0,normal_approx
+bursty,forecasting_eaes,cpu_threshold,oscillations,Oscillation count,10,4.0,4.0,4.0,4.0,0.0015654022580025523,0.046962067740076566,1.0,ok,55.0,normal_approx
+bursty,static,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-9.363049319090043,-9.332185959156659,-9.471201151884419,-9.18872389411538,0.00506203212626787,0.0755026230090938,-1.0,ok,0,normal_approx
+bursty,static,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-17.202913245453672,-17.22061221306417,-17.3598020438446,-17.095315682281058,0.00506203212626787,0.0755026230090938,-1.0,ok,0,normal_approx
+bursty,static,hpa_formula,drop_rate,Request drop rate,10,0.37948534465846073,0.3803377421792351,0.3768001568802779,0.3843616875085887,0.00506203212626787,0.0755026230090938,1.0,ok,55.0,normal_approx
+bursty,static,hpa_formula,sla_violation_rate,SLA violation rate,10,0.8421884611752927,0.8411760803937458,0.8379386570875933,0.8436119070429555,0.00506203212626787,0.0755026230090938,1.0,ok,55.0,normal_approx
+bursty,static,hpa_formula,replica_hours,Replica-hours,10,-0.525,-0.525,-0.525,-0.525,0.0015654022580025523,0.04070045870806636,-1.0,ok,0,normal_approx
+bursty,static,hpa_formula,p95_latency_ms,P95 latency (ms),10,30000.0,30000.0,30000.0,30000.0,0.0015654022580025523,0.04070045870806636,1.0,ok,55.0,normal_approx
+bursty,static,hpa_formula,scaling_events,Scaling events,10,-21.0,-21.0,-21.0,-21.0,0.0015654022580025523,0.04070045870806636,-1.0,ok,0,normal_approx
+bursty,static,hpa_formula,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,cpu_threshold,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-7.3866601017070685,-7.416046337573917,-7.5012601104831536,-7.329243781707264,0.00506203212626787,0.0755026230090938,-1.0,ok,0,normal_approx
+bursty,cpu_threshold,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-8.045691211790075,-8.04257065720773,-8.107365415541864,-7.955213118585492,0.00506203212626787,0.0755026230090938,-1.0,ok,0,normal_approx
+bursty,cpu_threshold,hpa_formula,drop_rate,Request drop rate,10,0.034817940120910544,0.0339294904812308,0.028838231255149685,0.038394793703641406,0.00506203212626787,0.0755026230090938,1.0,ok,55.0,normal_approx
+bursty,cpu_threshold,hpa_formula,sla_violation_rate,SLA violation rate,10,0.756646301936738,0.748254726369395,0.7332377896207682,0.7607530575786725,0.00506203212626787,0.0755026230090938,1.0,ok,55.0,normal_approx
+bursty,cpu_threshold,hpa_formula,replica_hours,Replica-hours,10,-0.3,-0.3,-0.3,-0.3,0.0015654022580025523,0.04070045870806636,-1.0,ok,0,normal_approx
+bursty,cpu_threshold,hpa_formula,p95_latency_ms,P95 latency (ms),10,24953.124999999985,25037.874999999985,24664.999999999985,25277.499999999978,0.00506203212626787,0.0755026230090938,1.0,ok,55.0,normal_approx
+bursty,cpu_threshold,hpa_formula,scaling_events,Scaling events,10,-16.0,-16.0,-16.0,-16.0,0.0015654022580025523,0.04070045870806636,-1.0,ok,0,normal_approx
+bursty,cpu_threshold,hpa_formula,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-0.9879937016954958,-0.9850230956493142,-0.9947499309201433,-0.9775967413441933,0.005033508200606253,0.0755026230090938,-1.0,ok,0,normal_approx
+bursty,eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-0.9879937016954958,-0.9850230956493142,-0.9947499309201433,-0.9731901898324846,0.005033508200606253,0.0755026230090938,-1.0,ok,0,normal_approx
+bursty,eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.016985617731361917,0.0,0.02748385323622372,,,0.2,ok,,not_testable
+bursty,eaes,hpa_formula,replica_hours,Replica-hours,10,-0.033333333333333326,-0.033333333333333326,-0.033333333333333326,-0.033333333333333326,0.0015654022580025523,0.04070045870806636,-1.0,ok,0,normal_approx
+bursty,eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,238.87499999999824,317.13749999999834,95.06249999999869,548.2499999999989,0.00506203212626787,0.0755026230090938,1.0,ok,55.0,normal_approx
+bursty,eaes,hpa_formula,scaling_events,Scaling events,10,-14.0,-14.0,-14.0,-14.0,0.0015654022580025523,0.04070045870806636,-1.0,ok,0,normal_approx
+bursty,eaes,hpa_formula,oscillations,Oscillation count,10,4.0,4.0,4.0,4.0,0.0015654022580025523,0.04070045870806636,1.0,ok,55.0,normal_approx
+bursty,forecasting_eaes,hpa_formula,energy_per_served_request_j,Estimated energy / served request (J),10,-0.9879937016954958,-0.9850230956493142,-0.9947499309201433,-0.9775967413441933,0.005033508200606253,0.0755026230090938,-1.0,ok,0,normal_approx
+bursty,forecasting_eaes,hpa_formula,energy_per_offered_request_j,Estimated energy / offered request (J),10,-0.9879937016954958,-0.9850230956493142,-0.9947499309201433,-0.9731901898324846,0.005033508200606253,0.0755026230090938,-1.0,ok,0,normal_approx
+bursty,forecasting_eaes,hpa_formula,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,forecasting_eaes,hpa_formula,sla_violation_rate,SLA violation rate,10,0.0,0.016985617731361917,0.0,0.02748385323622372,,,0.2,ok,,not_testable
+bursty,forecasting_eaes,hpa_formula,replica_hours,Replica-hours,10,-0.033333333333333326,-0.033333333333333326,-0.033333333333333326,-0.033333333333333326,0.0015654022580025523,0.04070045870806636,-1.0,ok,0,normal_approx
+bursty,forecasting_eaes,hpa_formula,p95_latency_ms,P95 latency (ms),10,238.87499999999824,317.13749999999834,95.06249999999869,548.2499999999989,0.00506203212626787,0.0755026230090938,1.0,ok,55.0,normal_approx
+bursty,forecasting_eaes,hpa_formula,scaling_events,Scaling events,10,-14.0,-14.0,-14.0,-14.0,0.0015654022580025523,0.04070045870806636,-1.0,ok,0,normal_approx
+bursty,forecasting_eaes,hpa_formula,oscillations,Oscillation count,10,4.0,4.0,4.0,4.0,0.0015654022580025523,0.04070045870806636,1.0,ok,55.0,normal_approx
+bursty,forecasting_eaes,eaes,energy_per_served_request_j,Estimated energy / served request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,forecasting_eaes,eaes,energy_per_offered_request_j,Estimated energy / offered request (J),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,forecasting_eaes,eaes,drop_rate,Request drop rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,forecasting_eaes,eaes,sla_violation_rate,SLA violation rate,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,forecasting_eaes,eaes,replica_hours,Replica-hours,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,forecasting_eaes,eaes,p95_latency_ms,P95 latency (ms),10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,forecasting_eaes,eaes,scaling_events,Scaling events,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
+bursty,forecasting_eaes,eaes,oscillations,Oscillation count,10,0.0,0.0,0.0,0.0,,,0.0,ok,,not_testable
