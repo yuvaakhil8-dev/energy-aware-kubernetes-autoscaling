@@ -543,10 +543,14 @@ class EnergyAwareController:
         if len(self.decision_log) > self.max_log_entries:
             self.decision_log.pop(0)
         
-        # Also write to CSV file
+        # Also write to CSV file.  Tests and container runs can redirect this
+        # side effect so a test run never dirties a tracked artifact.
         import csv
         import os
-        log_file = "scaling_decisions.csv"
+        log_file = os.environ.get("ENERGY_AWARE_DECISIONS_LOG", "scaling_decisions.csv")
+        log_dir = os.path.dirname(os.path.abspath(log_file))
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
         file_exists = os.path.exists(log_file)
         
         try:

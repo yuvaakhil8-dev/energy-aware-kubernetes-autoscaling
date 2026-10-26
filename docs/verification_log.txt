@@ -1,0 +1,156 @@
+ENERGY-AWARE AUTOSCALING - VERIFICATION LOG
+===========================================
+Project: C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes
+Branch: research-rebuild
+Verification started: 2026-10-26 (host local time)
+
+Every command below was executed directly in the project directory.  Outputs are
+recorded verbatim or summarised only where a command produced a large table; in
+that case the exact file containing the output is named.
+
+-------------------------------------------------------------------------------
+STEP 1.1 - WORKING DIRECTORY AND REPOSITORY
+-------------------------------------------------------------------------------
+Command:
+  Get-Location
+Output:
+  C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes
+Exit code: 0
+
+Command:
+  git branch --format='%(refname:short)'
+Output:
+  master
+  pre-rebuild-snapshot
+  research-rebuild
+Exit code: 0
+Result: PASS - both required branches exist; research-rebuild is checked out.
+
+Command:
+  git rev-parse --verify 1240ba7
+Output:
+  1240ba780e4fbc23b166373dd49a895fbf4defba
+Exit code: 0
+Result: PASS
+
+Command:
+  git log --oneline -15
+Output:
+  1240ba7 phase 10: final 20-section research report
+  f26d840 phase 9: research documentation, provenance, and final validation records
+  431810f analysis: record run/analysis commits and accurate EAES direction wording
+  603d1de phase 8: three-page research dashboard, immutable data copies, container packaging
+  2e1816f phase 7: real Minikube/HPA validation and kubectl cluster backend
+  cce700b phase 6: paired statistics, bootstrap CIs, Holm/Friedman/Nemenyi, sensitivity
+  97a99dc phase 5: 10-seed paired experiments, raw logs, and EAES diagnostic
+  e3160d9 phase 5: freeze analysis plan before confirmatory diagnostic
+  9ca53b5 phase 4: five strategies, forecasting ablation, paired experiment engine
+  4d6fda6 phase 3: node-level energy model with attribution and sensitivity scenarios
+  3412133 phase 2: cluster backend abstraction and simulated capacity model
+  17e579b phase 1: configuration-driven traces, provenance, reproduction scripts
+  88ca40e phase 0: audit, backup, dataset hashes, baseline evidence
+  c5ec94d baseline: pre-rebuild snapshot (29 tests passing, original datasets untouched)
+Exit code: 0
+
+Initial git status contained three classes of untracked/modified artefacts:
+  M results/test_report.txt        (intentional: refreshed test evidence)
+  M scaling_decisions.csv          (test side effect)
+  ?? results/flask.pid             (stale process id)
+  ?? results/runs/v3_paired_20261025T211551Z/ ... 211838Z (five incomplete run dirs,
+     four containing only raw JSONL, one containing a summary but no manifest)
+Action: scaling_decisions.csv was restored with `git checkout --`; the stale pid
+and incomplete run directories were moved to archive/pre-fix/incomplete-runs/.
+The test side effect was fixed by making the controller CSV path configurable
+(ENERGY_AWARE_DECISIONS_LOG) and pointing tests at the temporary directory.
+
+-------------------------------------------------------------------------------
+STEP 1.2 - PROTECTED DATASET HASHES
+-------------------------------------------------------------------------------
+Command:
+  python analysis/verify_dataset_hashes.py
+Output:
+  PASS experiment_results_v2.json 6279D01DC92D9C4FBE2EBB2C5BA0C12A7DA3EA7CA985E9FA762E88A11F34234E
+  PASS experiment_results.json C4BF4BFFFA8D0242395D2A2FB966C16DBC4884078BE7E82395E778EF87968451
+Exit code: 0
+Result: PASS - both originals match the required SHA-256 values.
+
+The byte-identical repository copies were also checked in PowerShell:
+  Get-FileHash data/experiment_results_v2.json -Algorithm SHA256
+  Get-FileHash data/experiment_results.json -Algorithm SHA256
+Both returned the same two digests.  No original or copy was modified.
+
+-------------------------------------------------------------------------------
+STEP 1.3 - CONFIRMATORY RUN MANIFEST
+-------------------------------------------------------------------------------
+File: results/runs/v3_paired_20261025T220942Z/manifest.json
+Command:
+  $m = Get-Content ...\manifest.json -Raw | ConvertFrom-Json
+  "n_runs=$($m.n_runs) dirty=$($m.git_tracked_dirty) commit=$($m.git_commit)"
+Output:
+  n_runs=300 dirty=False commit=431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea
+Exit code: 0
+Result: PASS
+  - 300 summaries = 6 workloads x 10 seeds x 5 strategies.
+  - git_tracked_dirty is false.
+  - git_commit 431810f matches the committed confirmatory analysis commit.
+  - Energy scenario: nominal.  Execution mode: simulation.
+
+Trace distinctness command:
+  $m.trace_index | Group-Object workload | ForEach-Object {
+    "$($_.Name): count=$($_.Count) distinct_hashes=$(($_.Group.trace_hash | Sort-Object -Unique).Count)" }
+Output:
+  steady: count=10 distinct_hashes=10
+  light: count=10 distinct_hashes=10
+  medium: count=10 distinct_hashes=10
+  heavy: count=10 distinct_hashes=10
+  variable: count=10 distinct_hashes=10
+  bursty: count=10 distinct_hashes=10
+Result: PASS - exactly ten distinct traces per workload class.
+
+Raw evidence count:
+  300 JSONL files exist in the run directory; one per (workload, seed, strategy).
+  results/runs/v3_paired_20261025T220942Z/summary.json contains 300 summaries.
+
+-------------------------------------------------------------------------------
+STEP 1.4 - TEST SUITE
+-------------------------------------------------------------------------------
+Command:
+  $env:ENERGY_AWARE_NO_BG='1'
+  python -m pytest -q 2>&1 | Tee-Object -FilePath results\test_report.txt
+Output:
+  ........................................................................ [ 79%]
+  ...................                                                      [100%]
+  91 passed in 1.18s
+Exit code: 0
+Result: PASS - the reported 91 tests genuinely pass.
+Full output: results/test_report.txt
+
+Repeat run after the test-isolation fix:
+  91 passed; `git status --porcelain` then showed only the intended source and
+  test-evidence changes, i.e. no controller CSV mutation.
+
+-------------------------------------------------------------------------------
+STEP 1.5 - ENVIRONMENT AVAILABILITY CHECK (KUBERNETES)
+-------------------------------------------------------------------------------
+Commands:
+  docker version --format '{{.Server.Version}}'
+  minikube status
+  kubectl config current-context
+Output:
+  docker: failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine;
+          the system cannot find the file specified.
+  minikube: status error: docker container inspect minikube ... exit status 1
+  kubectl: error: current-context is not set
+Exit code: 1
+Interpretation: at this point in the session Docker Desktop's Linux engine and
+Minikube were not running.  The three historical static and three historical
+native-HPA repetitions are intact on disk.  Additional repetitions can only be
+attempted if Docker Desktop and Minikube start successfully; this is re-checked
+in the Kubernetes validation section at the end of this log.  No cluster result
+is fabricated.
+
+-------------------------------------------------------------------------------
+STEP 1.6 - PROTECTED HASH RE-CHECK AFTER SOFTWARE WORK
+-------------------------------------------------------------------------------
+To be appended after all phases; see FINAL RE-CHECK at the end of this file.
+

@@ -1,6 +1,7 @@
 """Shared pytest fixtures for the Energy-Aware Autoscaling project."""
 import os
 import sys
+import tempfile
 
 import pytest
 
@@ -10,6 +11,12 @@ if BASE_DIR not in sys.path:
 
 # Prevent the background workload thread from starting during tests.
 os.environ.setdefault('ENERGY_AWARE_NO_BG', '1')
+
+# Keep controller CSV logging out of the tracked working tree.
+os.environ.setdefault(
+    'ENERGY_AWARE_DECISIONS_LOG',
+    os.path.join(tempfile.gettempdir(), 'eaes_test_scaling_decisions.csv'),
+)
 
 
 @pytest.fixture(scope='session')
