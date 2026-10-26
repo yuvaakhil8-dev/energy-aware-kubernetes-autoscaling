@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Energy-Aware Autoscaling Research{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='research.css') }}">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}" defer></script>
 </head>
 <body>
   <div class="layout">

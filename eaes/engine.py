@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import statistics
 from datetime import datetime, timezone
@@ -79,6 +80,12 @@ def run_single(
     m_max_backlog = 0.0
     m_count = 0
     trace_ticks = trace["ticks"]
+    # One extra interval is needed to act one tick before a future arrival can
+    # be served: a decision taken at t becomes ready at t + startup_delay.
+    horizon_ticks = max(1, int(math.ceil(float(sim["startup_delay_s"]) / dt)) + 1)
+    future_rates = [
+        float(entry["arrivals"]) / dt for entry in trace_ticks
+    ]
 
     for tick, item in enumerate(trace_ticks):
         t = float(item["time_s"])
@@ -87,6 +94,10 @@ def run_single(
             float(trace_ticks[tick - 1]["arrivals"]) / dt if tick > 0 else 0.0
         )
         arrivals = int(item["arrivals"])
+        # Only the explicit oracle strategy reads this field.  Reactive
+        # strategies receive the same state shape but ignore it, so the
+        # confirmatory comparison is unchanged.
+        future_window = future_rates[tick : tick + horizon_ticks]
         state = {
             "t": t,
             "dt_s": dt,
@@ -100,6 +111,7 @@ def run_single(
             "cpu_util": metrics["cpu_util"],
             "backlog_requests": metrics["backlog_requests"],
             "arrival_rate_rps": previous_rate,
+            "future_arrival_rates_rps": future_window,
             "startup_delay_s": float(sim["startup_delay_s"]),
         }
         decision = strategy.decide(state)

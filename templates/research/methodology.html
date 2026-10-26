@@ -1,7 +1,7 @@
 {% extends "research/base.html" %}
 {% block title %}Methodology · Energy-Aware Autoscaling{% endblock %}
-{% block heading %}Methodology and reproducibility{% endblock %}
-{% block subheading %}Assumptions, strategy distinctions, statistics, and provenance{% endblock %}
+{% block heading %}System overview and methodology{% endblock %}
+{% block subheading %}Architecture, execution flow, assumptions, strategy distinctions, and provenance{% endblock %}
 
 {% block content %}
 {% if legacy_notice is defined and legacy_notice %}
@@ -10,6 +10,86 @@
 
 <section class="callout info">
   <strong>Scope.</strong> The confirmatory experiment is a discrete-time simulation. A separate real Minikube/HPA validation is reported independently. No energy value in the simulation is a physical power measurement.
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <h2>System architecture</h2>
+      <p>{{ data.architecture.summary }}</p>
+    </div>
+    <span class="badge">three dashboard pages</span>
+  </div>
+  <div class="flow" aria-label="End-to-end execution flow">
+    {% for step in data.execution_flow %}
+    <div class="flow-step"><span class="flow-number">{{ loop.index }}</span><span>{{ step }}</span></div>
+    {% endfor %}
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Component</th><th>Code / artifact</th><th>Responsibility</th></tr></thead>
+      <tbody>
+      {% for layer in data.architecture.layers %}
+        <tr><td><strong>{{ layer.name }}</strong></td><td class="mono small">{{ layer.path }}</td><td>{{ layer.responsibility }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="grid-2">
+  <div class="panel">
+    <h2>Workload generation</h2>
+    <p>{{ data.workload_generation.method }}</p>
+    <dl class="facts">
+      <dt>Classes</dt><dd>{{ data.workload_generation.classes|join(', ') }}</dd>
+      <dt>Confirmatory seeds</dt><dd>{{ data.workload_generation.seeds_confirmatory }}</dd>
+      <dt>Extension seeds</dt><dd>{{ data.workload_generation.seeds_extension }} total (seeds 11–30 added separately)</dd>
+      <dt>Trace root</dt><dd class="mono">{{ data.workload_generation.trace_root }}</dd>
+    </dl>
+    <p class="small">Every strategy sees the same trace for a given workload and seed. Trace SHA-256 hashes are recorded in the run manifest.</p>
+  </div>
+  <div class="panel">
+    <h2>Metrics collection</h2>
+    <ul class="findings">{% for item in data.metrics_collection %}<li>{{ item }}</li>{% endfor %}</ul>
+    <p class="small">Ticks are aggregated inside a run before inference. The sample size is the number of runs, not the number of ticks.</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Dashboard APIs and read path</h2>
+  <p>The dashboard is read-only. It renders committed run summaries and raw per-tick records; it does not invent a live cluster state.</p>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>API</th><th>Purpose</th></tr></thead>
+      <tbody>
+      {% for endpoint in data.api_endpoints %}
+        <tr><td class="mono small">{{ endpoint.path }}</td><td>{{ endpoint.description }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="grid-2">
+  <div class="panel">
+    <h2>Execution modes are not interchangeable</h2>
+    <dl class="facts">
+      {% for name, description in data.execution_modes.items() %}
+      <dt>{{ name }}</dt><dd>{{ description }}</dd>
+      {% endfor %}
+    </dl>
+  </div>
+  <div class="panel">
+    <h2>Kubernetes integration</h2>
+    <p>{{ data.kubernetes_integration.backend }}</p>
+    <dl class="facts">
+      <dt>Manifests</dt><dd class="mono small">{{ data.kubernetes_integration.manifests|join(', ') }}</dd>
+      <dt>Validation script</dt><dd class="mono small">{{ data.kubernetes_integration.validation_script }}</dd>
+      <dt>Native HPA</dt><dd>{{ data.kubernetes_integration.native_hpa }}</dd>
+      <dt>Records</dt><dd class="mono small">{{ data.kubernetes_integration.recorded_results }}</dd>
+    </dl>
+  </div>
 </section>
 
 <section class="grid-2">
@@ -97,6 +177,16 @@ u         = served requests on the node / node capacity in the tick</pre>
     <p>Config hash: <code>{{ data.combined_config_hash or 'n/a' }}</code></p>
     <p>Run id: <code>{{ data.run_id or 'n/a' }}</code> · Git commit: <code>{{ data.git_commit or 'n/a' }}</code></p>
     <p>Execution mode: <strong>{{ data.execution_mode or 'n/a' }}</strong></p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Extensions (kept separate)</h2>
+  <p>Oracle upper bound, startup-delay sweep, 30-seed extension, power/PUE sensitivity, Pareto plots, forecast accuracy, and native-HPA replay are exploratory. They are never pooled with the confirmatory ten-seed comparison.</p>
+  <div class="link-grid">
+    {% for name, path in data.extension_artifacts.items() %}
+    <div class="link-card"><strong>{{ name|replace('_', ' ')|title }}</strong><span class="mono small">{{ path }}</span></div>
+    {% endfor %}
   </div>
 </section>
 

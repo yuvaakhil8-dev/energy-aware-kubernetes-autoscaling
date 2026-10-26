@@ -7,7 +7,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Application code, research package, immutable input copies, and generated
-# dashboard artifacts. Raw per-tick JSONL files are excluded in .dockerignore.
+# dashboard artifacts. Raw confirmatory per-tick JSONL files are included because
+# the time-series and controller-trace APIs read them.
 COPY app.py controller.py ./
 COPY eaes ./eaes
 COPY configs ./configs

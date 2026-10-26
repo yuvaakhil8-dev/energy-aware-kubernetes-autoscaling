@@ -306,6 +306,24 @@ class ForecastingEAESStrategy(EAESStrategy):
         return max(float(state.get("arrival_rate_rps") or 0.0), pred)
 
 
+class OracleStrategy(EAESStrategy):
+    """Exploratory perfect-foresight upper bound.
+
+    The controller sees the true arrival counts for the next startup-delay
+    horizon and sizes for the peak of that window.  It uses the same energy
+    model, replica bounds, and SLA margin as EAES.  It is deliberately not part
+    of the confirmatory five-strategy comparison: it is not deployable and its
+    information set is unattainable online.
+    """
+
+    name = "oracle"
+
+    def forecast_rate(self, state: Dict[str, Any]) -> float:
+        future = state.get("future_arrival_rates_rps") or []
+        current = float(state.get("arrival_rate_rps") or 0.0)
+        return max([current] + [float(x) for x in future])
+
+
 def make_strategy(name: str, configs: Dict[str, Dict[str, Any]]) -> Strategy:
     cfg = configs["strategies"][name]
     simulation = configs["simulation"]
@@ -320,4 +338,6 @@ def make_strategy(name: str, configs: Dict[str, Dict[str, Any]]) -> Strategy:
         return EAESStrategy(cfg, simulation, sla)
     if name == "forecasting_eaes":
         return ForecastingEAESStrategy(cfg, simulation, sla)
+    if name == "oracle":
+        return OracleStrategy(cfg, simulation, sla)
     raise ValueError(f"unknown strategy: {name}")

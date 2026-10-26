@@ -15,7 +15,8 @@ experiments/
 analysis/
 archive/
 docs/
-results/runs/**/*.jsonl
+# Raw confirmatory JSONL logs are required by the dashboard time-series and
+# controller-trace APIs.  Cluster request-per-request logs remain excluded.
 results/cluster_validation/*_requests.jsonl
 results/*.log
 results/*.txt

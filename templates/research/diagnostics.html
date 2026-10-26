@@ -13,6 +13,61 @@
     Node/pod energy conservation error: <code>{{ "%.3e"|format(data.conservation_max_error_j or 0) }} J</code>.
   </section>
 
+  <section class="panel control-panel">
+    <div class="panel-head">
+      <div>
+        <h2>Live controller trace (recorded raw ticks)</h2>
+        <p>One real simulated run, not a synthetic UI stream. Select a workload, strategy, and seed to inspect the final controller state, decision, reason, cooldown status, and scaling history.</p>
+      </div>
+      <span class="badge">raw JSONL</span>
+    </div>
+    <div class="control-bar">
+      <label class="select-label">Workload
+        <select id="traceWorkload">
+          {% for workload in data.choices.workloads %}<option value="{{ workload }}">{{ workload }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="select-label">Strategy
+        <select id="traceStrategy">
+          {% for strategy in data.choices.strategies %}<option value="{{ strategy }}" {% if strategy == data.choices.default_strategy %}selected{% endif %}>{{ data.choices.strategy_labels[strategy] }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="select-label">Seed
+        <select id="traceSeed">
+          {% for seed in data.choices.seeds %}<option value="{{ seed }}" {% if loop.first %}selected{% endif %}>Seed {{ seed }}</option>{% endfor %}
+        </select>
+      </label>
+      <div class="control-status" id="traceStatus">Loading trace…</div>
+    </div>
+    <div class="mini-kpi-grid">
+      <div class="mini-kpi"><span>Current workload (final tick)</span><strong id="trWorkload">—</strong></div>
+      <div class="mini-kpi"><span>Observed request rate</span><strong id="trRate">—</strong></div>
+      <div class="mini-kpi"><span>CPU utilisation</span><strong id="trCpu">—</strong></div>
+      <div class="mini-kpi"><span>Replicas ready / desired</span><strong id="trReplicas">—</strong></div>
+      <div class="mini-kpi"><span>Scaling decision</span><strong id="trAction">—</strong></div>
+      <div class="mini-kpi"><span>Rule fired</span><strong id="trRule">—</strong></div>
+      <div class="mini-kpi"><span>Cooldown / stabilization</span><strong id="trCooldown">—</strong></div>
+      <div class="mini-kpi"><span>SLA margin</span><strong id="trMargin">—</strong></div>
+      <div class="mini-kpi"><span>Forecast (if any)</span><strong id="trForecast">—</strong></div>
+      <div class="mini-kpi"><span>Estimated energy / tick</span><strong id="trEnergy">—</strong></div>
+    </div>
+    <div class="decision-box">
+      <span class="decision-label">Decision reason</span>
+      <p id="trReason">—</p>
+      <pre class="mono small" id="trDetails">—</pre>
+    </div>
+    <div class="chart-wrap"><canvas id="traceForecastChart" height="130"></canvas></div>
+    <p class="chart-note">Forecast is shown as recorded at decision time. Actual-forward is the observed offered rate two ticks later, matching the forecasting horizon; it is not a retrained prediction.</p>
+    <h3>Scaling history (most recent first)</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>t (s)</th><th>Action</th><th>From → to</th><th>Rule</th><th>Reason</th><th>Observed req/s</th></tr></thead>
+        <tbody id="traceHistoryBody"><tr><td colspan="6" class="small">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <p class="small" id="traceBehavior">Rule counts appear here.</p>
+  </section>
+
   <section class="panel">
     <div class="panel-head">
       <div><h2>EAES vs HPA formula: decomposition</h2><p>Energy per served request, energy per offered request, replica-hours, drops, and SLA violations. Ratios below 1 favour EAES.</p></div>

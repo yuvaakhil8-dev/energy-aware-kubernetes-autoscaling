@@ -405,7 +405,10 @@ def _load_research_bundle():
         'ci_high', 'mean_diff', 'median_diff', 'p_value', 'p_holm',
         'cliffs_delta', 'Q',
     }
-    for name in ('descriptive', 'paired', 'friedman', 'nemenyi', 'forecasting', 'sensitivity'):
+    for name in (
+        'descriptive', 'paired', 'friedman', 'nemenyi', 'forecasting', 'sensitivity',
+        'headline', 'paired_headline',
+    ):
         rows = _read_csv_file(os.path.join(RESULTS_DIR, 'tables', f'{name}.csv'))
         bundle['tables'][name] = [_normalise_row(row, numeric) for row in rows]
     bundle['diagnostic'] = _read_json_file(os.path.join(RESULTS_DIR, 'diagnostic.json'))
@@ -508,7 +511,11 @@ def _research_chart_data(bundle):
     workloads = bundle['manifest'].get('workloads', []) if bundle['manifest'] else []
     strategies = bundle['manifest'].get('strategies', RESEARCH_STRATEGIES) if bundle['manifest'] else RESEARCH_STRATEGIES
     metrics = {}
-    for metric in ('energy_per_served_request_j', 'sla_violation_rate', 'replica_hours', 'drop_rate'):
+    for metric in (
+        'energy_per_served_request_j', 'energy_per_offered_request_j',
+        'sla_violation_rate', 'replica_hours', 'drop_rate',
+        'p95_latency_ms', 'scaling_events', 'oscillations',
+    ):
         metrics[metric] = {
             workload: [
                 (_table_lookup(desc, metric, workload, strategy) or {}).get('mean')
@@ -523,6 +530,288 @@ def _research_chart_data(bundle):
         'metrics': metrics,
         'metric_labels': RESEARCH_METRIC_LABELS,
     }
+
+
+def _research_choices(bundle):
+    manifest = bundle['manifest'] or {}
+    return {
+        'workloads': manifest.get('workloads', []),
+        'strategies': manifest.get('strategies', RESEARCH_STRATEGIES),
+        'strategy_labels': {
+            s: RESEARCH_STRATEGY_LABELS.get(s, s)
+            for s in manifest.get('strategies', RESEARCH_STRATEGIES)
+        },
+        'seeds': manifest.get('seeds', []),
+        'default_workload': (manifest.get('workloads') or ['steady'])[0],
+        'default_strategy': 'eaes' if 'eaes' in manifest.get('strategies', []) else 'static',
+    }
+
+
+def _raw_run_file(workload, strategy, seed):
+    run_dir = _research_run_dir()
+    if not run_dir:
+        return None
+    return os.path.join(run_dir, f'{workload}_seed{int(seed)}_{strategy}.jsonl')
+
+
+def _read_jsonl(path):
+    rows = []
+    try:
+        with open(path, 'r', encoding='utf-8') as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    except (FileNotFoundError, OSError):
+        return []
+    return rows
+
+
+def _num(value):
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    return None
+
+
+def _mean_or_none(values):
+    vals = [v for v in values if isinstance(v, (int, float)) and not isinstance(v, bool)]
+    return round(sum(vals) / len(vals), 6) if vals else None
+
+
+def _summary_mean(bundle, workload, strategy, field):
+    vals = [
+        r.get(field) for r in bundle['summaries']
+        if r.get('workload') == workload and r.get('strategy') == strategy
+        and isinstance(r.get(field), (int, float)) and not isinstance(r.get(field), bool)
+    ]
+    return round(sum(vals) / len(vals), 6) if vals else None
+
+
+def _selected_summary(bundle, workload, strategy):
+    fields = [
+        'energy_per_served_request_j', 'energy_per_offered_request_j',
+        'drop_rate', 'sla_violation_rate', 'replica_hours',
+        'p95_latency_ms', 'scaling_events', 'oscillations',
+        'served_requests', 'offered_requests', 'avg_ready_replicas',
+        'measurement_energy_j',
+    ]
+    out = {field: _summary_mean(bundle, workload, strategy, field) for field in fields}
+    out['n_runs'] = len([
+        r for r in bundle['summaries']
+        if r.get('workload') == workload and r.get('strategy') == strategy
+    ])
+    return out
+
+
+def _time_series_from_rows(rows_by_seed):
+    if not rows_by_seed:
+        return {}
+    length = min(len(rows) for rows in rows_by_seed)
+    if length == 0:
+        return {}
+
+    def avg(field):
+        values = []
+        for i in range(length):
+            vals = [_num(rows[i].get(field)) for rows in rows_by_seed]
+            vals = [v for v in vals if v is not None]
+            values.append(round(sum(vals) / len(vals), 6) if vals else None)
+        return values
+
+    observed = avg('observed_rate_rps')
+    forecast = avg('forecast_rps')
+    actual_forward = [
+        observed[i + 2] if i + 2 < len(observed) else None
+        for i in range(length)
+    ]
+    return {
+        'time_s': avg('time_s'),
+        'offered_rps': observed,
+        'observed_rps': observed,
+        'forecast_rps': forecast,
+        'actual_forward_rps': actual_forward,
+        'cpu_percent': [
+            (round(v * 100.0, 4) if v is not None else None)
+            for v in avg('cpu_util')
+        ],
+        'ready_replicas': avg('ready_replicas'),
+        'desired_replicas': avg('desired_replicas'),
+        'pending_replicas': avg('pending_replicas'),
+        'p95_latency_ms': avg('p95_latency_ms'),
+        'backlog_requests': avg('backlog_requests'),
+        'energy_per_tick_j': avg('node_energy_j'),
+        'cumulative_energy_j': avg('cumulative_energy_j'),
+        'sla_margin': avg('sla_margin'),
+    }
+
+
+def research_timeseries_payload(workload=None, strategy=None, seed=None):
+    bundle = _load_research_bundle()
+    choices = _research_choices(bundle)
+    workload = workload or choices['default_workload']
+    strategy = strategy or choices['default_strategy']
+    payload = {
+        'available': False,
+        'error': None,
+        'workload': workload,
+        'strategy': strategy,
+        'seed': seed,
+        'choices': choices,
+        'series': {},
+        'summary': {},
+    }
+    if not bundle['available']:
+        payload['error'] = bundle['error'] or 'No generated run is available.'
+        return payload
+    if workload not in choices['workloads']:
+        payload['error'] = f'Unknown workload: {workload}'
+        return payload
+    if strategy not in choices['strategies']:
+        payload['error'] = f'Unknown strategy: {strategy}'
+        return payload
+    seeds = choices['seeds']
+    if seed in (None, '', 'all'):
+        requested_seeds = list(seeds)
+        payload['seed'] = 'all'
+    else:
+        try:
+            seed_int = int(seed)
+        except (TypeError, ValueError):
+            payload['error'] = f'Invalid seed: {seed}'
+            return payload
+        if seed_int not in seeds:
+            payload['error'] = f'Unknown seed: {seed_int}'
+            return payload
+        requested_seeds = [seed_int]
+    rows_by_seed = []
+    for s in requested_seeds:
+        path = _raw_run_file(workload, strategy, s)
+        rows = _read_jsonl(path) if path else []
+        if rows:
+            rows_by_seed.append(rows)
+    if not rows_by_seed:
+        payload['error'] = 'Raw per-tick logs are missing for this selection.'
+        return payload
+    payload['available'] = True
+    payload['seeds_used'] = requested_seeds
+    payload['series'] = _time_series_from_rows(rows_by_seed)
+    payload['summary'] = _selected_summary(bundle, workload, strategy)
+    payload['strategy_label'] = RESEARCH_STRATEGY_LABELS.get(strategy, strategy)
+    payload['execution_mode'] = (bundle['manifest'] or {}).get('execution_mode')
+    return payload
+
+
+def research_controller_trace_payload(workload=None, strategy=None, seed=None):
+    bundle = _load_research_bundle()
+    choices = _research_choices(bundle)
+    workload = workload or choices['default_workload']
+    strategy = strategy or choices['default_strategy']
+    payload = {
+        'available': False,
+        'error': None,
+        'workload': workload,
+        'strategy': strategy,
+        'seed': seed or (choices['seeds'][0] if choices['seeds'] else None),
+        'choices': choices,
+        'latest': {},
+        'history': [],
+        'behavior': {},
+        'series': {},
+        'summary': {},
+    }
+    if not bundle['available']:
+        payload['error'] = bundle['error'] or 'No generated run is available.'
+        return payload
+    if workload not in choices['workloads']:
+        payload['error'] = f'Unknown workload: {workload}'
+        return payload
+    if strategy not in choices['strategies']:
+        payload['error'] = f'Unknown strategy: {strategy}'
+        return payload
+    try:
+        seed_int = int(payload['seed'])
+    except (TypeError, ValueError):
+        payload['error'] = f'Invalid seed: {payload["seed"]}'
+        return payload
+    if seed_int not in choices['seeds']:
+        payload['error'] = f'Unknown seed: {seed_int}'
+        return payload
+    path = _raw_run_file(workload, strategy, seed_int)
+    rows = _read_jsonl(path) if path else []
+    if not rows:
+        payload['error'] = 'Raw per-tick log is missing for this selection.'
+        return payload
+
+    latest = rows[-1]
+    rule = str(latest.get('rule_fired') or '')
+    blocking_tokens = (
+        'cooldown', 'min_dwell', 'stabilization', 'warmup_no_scaledown',
+    )
+    if strategy == 'static':
+        cooldown_status = 'Fixed replicas; no cooldown rule applies.'
+    elif any(token in rule for token in blocking_tokens):
+        cooldown_status = f'Blocking: {latest.get("decision_reason") or rule}'
+    else:
+        cooldown_status = 'Not blocking at the final tick.'
+    history = []
+    for row in reversed(rows):
+        if row.get('scaling_action') in ('up', 'down'):
+            history.append({
+                'time_s': row.get('time_s'),
+                'action': row.get('scaling_action'),
+                'from_replicas': (row.get('decision_details') or {}).get('current_replicas'),
+                'to_replicas': row.get('desired_replicas'),
+                'rule': row.get('rule_fired'),
+                'reason': row.get('decision_reason'),
+                'observed_rps': row.get('observed_rate_rps'),
+                'cpu_percent': round((_num(row.get('cpu_util')) or 0.0) * 100.0, 3),
+            })
+        if len(history) >= 20:
+            break
+    behavior_counts = Counter(str(r.get('rule_fired') or 'unknown') for r in rows)
+    action_counts = Counter(str(r.get('scaling_action') or 'hold') for r in rows)
+    payload.update({
+        'available': True,
+        'execution_mode': (bundle['manifest'] or {}).get('execution_mode'),
+        'strategy_label': RESEARCH_STRATEGY_LABELS.get(strategy, strategy),
+        'latest': {
+            'time_s': latest.get('time_s'),
+            'tick': latest.get('tick'),
+            'warmup': latest.get('warmup'),
+            'observed_rps': latest.get('observed_rate_rps'),
+            'arrival_rate_rps': latest.get('arrival_rate_rps'),
+            'cpu_percent': round((_num(latest.get('cpu_util')) or 0.0) * 100.0, 3),
+            'ready_replicas': latest.get('ready_replicas'),
+            'desired_replicas': latest.get('desired_replicas'),
+            'pending_replicas': latest.get('pending_replicas'),
+            'pending_after': latest.get('pending_replicas_after'),
+            'backlog_requests': latest.get('backlog_requests'),
+            'forecast_rps': latest.get('forecast_rps'),
+            'sla_margin': latest.get('sla_margin'),
+            'scaling_action': latest.get('scaling_action'),
+            'rule_fired': latest.get('rule_fired'),
+            'decision_reason': latest.get('decision_reason'),
+            'decision_details': latest.get('decision_details') or {},
+            'cooldown_status': cooldown_status,
+            'energy_per_tick_j': latest.get('node_energy_j'),
+        },
+        'history': history,
+        'behavior': {
+            'action_counts': dict(action_counts),
+            'rule_counts': dict(behavior_counts.most_common(8)),
+            'scaling_events': sum(v for k, v in action_counts.items() if k in ('up', 'down')),
+            'ticks': len(rows),
+        },
+        'series': _time_series_from_rows([rows]),
+        'summary': _selected_summary(bundle, workload, strategy),
+    })
+    return payload
 
 
 def research_results_payload():
@@ -544,6 +833,7 @@ def research_results_payload():
             'ended_at': (bundle['manifest'] or {}).get('ended_at'),
         },
         'kpis': _research_kpis(bundle),
+        'choices': _research_choices(bundle),
         'descriptive_primary': _primary_descriptive(bundle),
         'chart': _research_chart_data(bundle),
         'paired_primary': [
@@ -561,11 +851,21 @@ def research_results_payload():
             'manifest': bundle['cluster_manifest'],
         },
         'diagnostic_findings': (bundle['diagnostic'] or {}).get('findings', []),
+        'extensions': {
+            'oracle': os.path.exists(os.path.join(RESULTS_DIR, 'extension', 'oracle', 'ORACLE.md')),
+            'startup_sweep': os.path.exists(os.path.join(RESULTS_DIR, 'extension', 'startup_sweep', 'STARTUP_SWEEP.md')),
+            'seed30': os.path.exists(os.path.join(RESULTS_DIR, 'extension', 'seed30', 'RESULTS_30SEED.md')),
+            'energy_sensitivity': os.path.exists(os.path.join(RESULTS_DIR, 'extension', 'energy_sensitivity', 'ENERGY_SENSITIVITY.md')),
+            'pareto': os.path.exists(os.path.join(RESULTS_DIR, 'extension', 'energy_vs_drop', 'README.md')),
+            'hpa_replay': os.path.exists(os.path.join(RESULTS_DIR, 'extension', 'hpa_replay', 'HPA_REPLAY.md')),
+            'forecast_accuracy': os.path.exists(os.path.join(RESULTS_DIR, 'tables', 'forecast_accuracy.md')),
+        },
         'warnings': [
             'All energy is modelled, not measured.',
             'Static replicas can show low energy per served request while dropping traffic; read drop/SLA columns together.',
             'The HPA-formula baseline is a simulation of the replica formula, not the Kubernetes HPA controller.',
             'The real-cluster validation is separate from the paired simulation.',
+            'Optimality and energy claims are restricted to the simulated design and modelled power assumptions.',
         ],
     }
     return payload
@@ -579,6 +879,7 @@ def research_diagnostic_payload():
         'run': (bundle['manifest'] or {}).get('run_id'),
         'git_commit': (bundle['manifest'] or {}).get('git_commit'),
         'execution_mode': (bundle['manifest'] or {}).get('execution_mode'),
+        'choices': _research_choices(bundle),
         'comparisons': diagnostic.get('comparisons', []),
         'forecast_comparison': diagnostic.get('forecast_comparison', []),
         'rule_rows': diagnostic.get('rule_rows', []),
@@ -599,7 +900,7 @@ def research_diagnostic_payload():
 
 def research_methodology_payload():
     configs = {}
-    for name in ('experiment', 'simulation', 'energy', 'sla', 'strategies'):
+    for name in ('experiment', 'simulation', 'energy', 'sla', 'strategies', 'extensions'):
         path = os.path.join(CONFIG_DIR, f'{name}.yaml')
         try:
             with open(path, 'r', encoding='utf-8') as fh:
@@ -638,11 +939,132 @@ def research_methodology_payload():
             'Kubernetes validation is a separate single-node Minikube run.',
             'No reproduction of Li et al. (2025); full text was unavailable.',
             'The original 27-row dataset is pseudo-replicated and is not used for inference.',
+            'The HPA formula is not the native Kubernetes HPA controller.',
+            'Only three repetitions per cluster mode were recorded.',
         ],
+        'architecture': {
+            'summary': 'A Flask service exposes the dashboard; a stdlib simulation engine generates paired runs; analysis scripts consume run summaries and raw ticks; Kubernetes validation is a separate recorded path.',
+            'layers': [
+                {
+                    'name': 'Flask application',
+                    'path': 'app.py',
+                    'responsibility': 'Three-page dashboard, preserved legacy routes, research APIs, and demo workload endpoints.',
+                },
+                {
+                    'name': 'Configuration and provenance',
+                    'path': 'eaes/config.py; configs/*.yaml',
+                    'responsibility': 'Validated YAML configuration, canonical hashes, git state, and atomic JSON writes.',
+                },
+                {
+                    'name': 'Workload generation',
+                    'path': 'eaes/workload.py',
+                    'responsibility': 'Six deterministic workload traces per seed with SHA-256 trace hashes.',
+                },
+                {
+                    'name': 'Simulation backend',
+                    'path': 'eaes/backend.py',
+                    'responsibility': 'Bounded queue, pod capacity, node placement, startup delay, and capacity accounting.',
+                },
+                {
+                    'name': 'Autoscaling engine',
+                    'path': 'eaes/strategies.py; eaes/forecast.py',
+                    'responsibility': 'Five confirmatory controllers plus an extension-only oracle.',
+                },
+                {
+                    'name': 'Energy estimator',
+                    'path': 'eaes/energy.py',
+                    'responsibility': 'Node-level P_idle/P_max/PUE model with pod attribution and conservation checks.',
+                },
+                {
+                    'name': 'Experiment engine',
+                    'path': 'eaes/engine.py; experiments/run_v3.py',
+                    'responsibility': 'Paired workload x seed x strategy runs, raw tick logs, summaries, and manifests.',
+                },
+                {
+                    'name': 'Analysis pipeline',
+                    'path': 'analysis/',
+                    'responsibility': 'Headline tables, paired tests, diagnostics, forecast accuracy, sensitivity, and extension reports.',
+                },
+                {
+                    'name': 'Kubernetes validation',
+                    'path': 'experiments/run_cluster_validation.py; kubernetes/',
+                    'responsibility': 'Separate real Minikube observations with modelled energy from measured node CPU.',
+                },
+            ],
+        },
+        'execution_flow': [
+            'Load and validate YAML configuration; record canonical config hashes and git state.',
+            'Generate or load deterministic traces for each workload and seed; verify trace hashes.',
+            'Run each strategy on the same trace and seed, recording every control interval as JSONL.',
+            'Aggregate ticks to run-level metrics; never treat ticks as independent observations.',
+            'Compute descriptive intervals, paired differences, Holm-adjusted Wilcoxon tests, Friedman/Nemenyi tests, and effect sizes.',
+            'Render the confirmatory results and diagnostics from generated artifacts; label extensions separately.',
+        ],
+        'workload_generation': {
+            'classes': ['steady', 'light', 'medium', 'heavy', 'variable', 'bursty'],
+            'method': 'Seeded arrival counts per 5 s interval from documented class parameters; identical traces are reused across strategies.',
+            'seeds_confirmatory': 10,
+            'seeds_extension': 30,
+            'trace_root': 'traces/',
+        },
+        'metrics_collection': [
+            'Offered, served, and dropped requests per tick and cumulatively.',
+            'CPU utilisation, ready/desired/pending replicas, backlog, and p95 latency.',
+            'Estimated node and pod energy per tick, with conservation error.',
+            'Scaling action, rule fired, reason, forecast, SLA margin, and decision details.',
+            'Run-level aggregates: energy per served/offered request, drop rate, SLA violation rate, replica-hours, scaling events, oscillations.',
+        ],
+        'energy_estimator': {
+            'formula': 'P_node = P_idle + (P_max - P_idle) * CPU_util; E_node = P_node * dt * PUE',
+            'idle_w': 150.0,
+            'max_w': 500.0,
+            'pue': 1.2,
+            'sensitivity': 'low/nominal/high power and PUE 1.0-1.6 under results/extension/energy_sensitivity/',
+            'warning': 'All energy values are model estimates, not physical power measurements.',
+        },
+        'kubernetes_integration': {
+            'backend': 'KubernetesCluster in eaes/backend.py uses kubectl; the installed Python kubernetes package is broken.',
+            'manifests': ['kubernetes/deployment.yaml', 'kubernetes/service.yaml', 'kubernetes/hpa.yaml'],
+            'validation_script': 'experiments/run_cluster_validation.py',
+            'native_hpa': 'autoscaling/v2, CPU target 50%, min 1, max 10.',
+            'recorded_results': 'results/cluster_validation/ (3 static and 3 native-HPA repetitions; energy modelled from node CPU).',
+        },
+        'api_endpoints': [
+            {'path': '/', 'description': 'Results dashboard with filters, KPIs, time series, and energy-vs-drop comparison.'},
+            {'path': '/eaes-diagnostics', 'description': 'EAES decomposition, controller trace, forecast error, and rule diagnostics.'},
+            {'path': '/methodology', 'description': 'System overview, execution flow, configuration, statistics, and limitations.'},
+            {'path': '/api/v1/research/results', 'description': 'Confirmatory results, KPIs, chart series, and cluster aggregate.'},
+            {'path': '/api/v1/research/diagnostic', 'description': 'Diagnostic decomposition, rule evidence, and forecast ablation.'},
+            {'path': '/api/v1/research/timeseries?workload=&strategy=&seed=', 'description': 'Backend series from raw confirmatory tick logs; seed=all averages runs.'},
+            {'path': '/api/v1/research/controller-trace?workload=&strategy=&seed=', 'description': 'Latest controller state, decision, cooldown status, history, actual vs forecast.'},
+            {'path': '/api/v1/research/methodology', 'description': 'Configuration, architecture, provenance, and limitations.'},
+            {'path': '/api/v1/research/cluster', 'description': 'Separate Kubernetes validation records.'},
+            {'path': '/api/v1/research/tables/<name>', 'description': 'Whitelisted generated CSV table.'},
+        ],
+        'execution_modes': {
+            'simulation': 'Paired discrete-time simulation; every confirmatory result on the dashboard.',
+            'kubernetes_validation': 'Separate single-node Minikube observations; replica counts and request outcomes are real, node energy is modelled.',
+            'dashboard': 'Read-only views over committed/generated artifacts; no live cluster data is implied.',
+        },
+        'extension_artifacts': {
+            'oracle': 'results/extension/oracle/ORACLE.md',
+            'startup_sweep': 'results/extension/startup_sweep/STARTUP_SWEEP.md',
+            'seed30': 'results/extension/seed30/RESULTS_30SEED.md',
+            'energy_sensitivity': 'results/extension/energy_sensitivity/ENERGY_SENSITIVITY.md',
+            'energy_vs_drop': 'results/extension/energy_vs_drop/README.md',
+            'hpa_replay': 'results/extension/hpa_replay/HPA_REPLAY.md',
+            'forecast_accuracy': 'results/tables/forecast_accuracy.md',
+        },
         'reproduce_commands': [
-            'python -m experiments.run_v3',
+            'python analysis/verify_dataset_hashes.py',
             'python -m analysis.analyze',
+            'python -m analysis.make_headline_table',
             'python -m analysis.diagnose',
+            'python -m analysis.forecast_accuracy',
+            'python -m experiments.run_extensions',
+            'python -m analysis.energy_sensitivity',
+            'python -m analysis.energy_vs_drop',
+            'python -m analysis.hpa_replay',
             'python -m pytest -q',
         ],
     }
@@ -986,6 +1408,28 @@ def research_diagnostic_api():
     return jsonify(research_diagnostic_payload())
 
 
+@app.route("/api/v1/research/timeseries")
+def research_timeseries_api():
+    payload = research_timeseries_payload(
+        workload=request.args.get('workload'),
+        strategy=request.args.get('strategy'),
+        seed=request.args.get('seed', 'all'),
+    )
+    status = 200 if payload.get('available') else 400
+    return jsonify(payload), status
+
+
+@app.route("/api/v1/research/controller-trace")
+def research_controller_trace_api():
+    payload = research_controller_trace_payload(
+        workload=request.args.get('workload'),
+        strategy=request.args.get('strategy'),
+        seed=request.args.get('seed'),
+    )
+    status = 200 if payload.get('available') else 400
+    return jsonify(payload), status
+
+
 @app.route("/api/v1/research/methodology")
 def research_methodology_api():
     return jsonify(research_methodology_payload())
@@ -1006,7 +1450,10 @@ def research_cluster_api():
 
 @app.route("/api/v1/research/tables/<name>")
 def research_table_api(name):
-    allowed = {'descriptive', 'paired', 'friedman', 'nemenyi', 'forecasting', 'sensitivity'}
+    allowed = {
+        'descriptive', 'paired', 'friedman', 'nemenyi', 'forecasting', 'sensitivity',
+        'headline', 'paired_headline',
+    }
     if name not in allowed:
         return jsonify({"error": "unknown table", "allowed": sorted(allowed)}), 404
     bundle = _load_research_bundle()
@@ -1160,6 +1607,7 @@ if __name__ == "__main__":
     print("  GET  /cpu/light | /cpu/intensive | /metrics")
     print("  GET  /api/v1/experiments | /api/v1/research-papers")
     print("  GET  /api/v1/research/results | /diagnostic | /methodology | /cluster")
+    print("  GET  /api/v1/research/timeseries | /controller-trace")
     print("  GET  /status | /controller/status")
     print("=" * 60)
     app.run(host="0.0.0.0", port=5000, threaded=True)

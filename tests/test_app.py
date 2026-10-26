@@ -30,6 +30,10 @@ JSON_ROUTES = [
     '/api/v1/research/cluster',
     '/api/v1/research/tables/descriptive',
     '/api/v1/research/tables/paired',
+    '/api/v1/research/tables/headline',
+    '/api/v1/research/tables/paired_headline',
+    '/api/v1/research/timeseries?workload=steady&strategy=eaes&seed=1',
+    '/api/v1/research/controller-trace?workload=variable&strategy=forecasting_eaes&seed=1',
 ]
 
 
@@ -99,7 +103,8 @@ def test_metrics_text(client):
 
 def test_static_assets(client):
     for asset in ('/static/dashboard.css', '/static/dashboard.js',
-                  '/static/research.css', '/static/research.js'):
+                  '/static/research.css', '/static/research.js',
+                  '/static/vendor/chart.umd.min.js'):
         response = client.get(asset)
         assert response.status_code == 200, asset
         assert len(response.get_data()) > 0
@@ -124,12 +129,68 @@ def test_research_diagnostic_payload(client):
     assert payload['conservation_max_error_j'] is not None
 
 
+def test_research_timeseries_is_real_backend_data(client):
+    payload = client.get(
+        '/api/v1/research/timeseries?workload=bursty&strategy=forecasting_eaes&seed=1'
+    ).get_json()
+    assert payload['available'] is True
+    assert payload['workload'] == 'bursty'
+    assert payload['summary']['n_runs'] == 10
+    series = payload['series']
+    assert len(series['time_s']) == 60
+    assert len(series['offered_rps']) == 60
+    assert len(series['cpu_percent']) == 60
+    assert len(series['ready_replicas']) == 60
+    assert any(v is not None and v > 0 for v in series['forecast_rps'])
+    assert any(v is not None and v > 0 for v in series['actual_forward_rps'])
+
+
+def test_research_timeseries_rejects_unknown_filters(client):
+    response = client.get(
+        '/api/v1/research/timeseries?workload=not-a-workload&strategy=eaes&seed=1'
+    )
+    assert response.status_code == 400
+    assert 'Unknown workload' in response.get_json()['error']
+
+
+def test_research_controller_trace_exposes_decision_and_history(client):
+    payload = client.get(
+        '/api/v1/research/controller-trace?workload=variable&strategy=eaes&seed=1'
+    ).get_json()
+    assert payload['available'] is True
+    latest = payload['latest']
+    for key in (
+        'observed_rps', 'cpu_percent', 'ready_replicas', 'desired_replicas',
+        'scaling_action', 'rule_fired', 'decision_reason', 'cooldown_status',
+        'sla_margin', 'decision_details',
+    ):
+        assert key in latest
+    assert payload['behavior']['ticks'] == 60
+    assert isinstance(payload['history'], list)
+
+
+def test_results_payload_exposes_chart_choices(client):
+    payload = client.get('/api/v1/research/results').get_json()
+    assert payload['choices']['workloads']
+    assert payload['choices']['default_strategy'] == 'eaes'
+    for metric in (
+        'energy_per_served_request_j', 'energy_per_offered_request_j',
+        'drop_rate', 'sla_violation_rate', 'replica_hours', 'p95_latency_ms',
+    ):
+        assert metric in payload['chart']['metrics']
+
+
 def test_research_methodology_payload(client):
     payload = client.get('/api/v1/research/methodology').get_json()
     assert payload['configs']['sla']['latency_sla_ms'] == 500.0
     assert payload['configs']['simulation']['pods_per_node'] == 4
     assert payload['dataset_hashes']['experiment_results_v2.json']
     assert 'hpa_formula' in payload['strategy_distinctions']
+    assert payload['architecture']['layers']
+    assert payload['execution_flow']
+    assert payload['execution_modes']['simulation']
+    assert any(api['path'].startswith('/api/v1/research/timeseries') for api in payload['api_endpoints'])
+    assert payload['kubernetes_integration']['native_hpa']
 
 
 def test_research_table_whitelist(client):

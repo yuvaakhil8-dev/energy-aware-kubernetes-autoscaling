@@ -1,0 +1,15 @@
+# Extension-only configuration.  Kept separate from the confirmatory strategy
+# configuration so adding the oracle does not change the confirmatory config hash.
+oracle:
+  min_replicas: 1
+  max_replicas: 10
+  cooldown_s: 0
+  stabilization_s: 0
+  min_dwell_s: 0
+  margin_threshold: 0.10
+  oscillation_window_s: 120
+  max_scale_step: 10
+  description: >-
+    Perfect-foresight demand oracle over the startup-delay horizon.  Exploratory
+    upper bound, not a deployable controller and not part of the confirmatory
+    five-strategy comparison.

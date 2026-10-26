@@ -1,6 +1,6 @@
 {% extends "research/base.html" %}
 {% block title %}Results · Energy-Aware Autoscaling{% endblock %}
-{% block heading %}Research dashboard: paired results{% endblock %}
+{% block heading %}Energy-aware autoscaling: paired results{% endblock %}
 {% block subheading %}Six workloads × ten seeds × five strategies · simulation, not a power measurement{% endblock %}
 
 {% block content %}
@@ -17,7 +17,7 @@
     All energy values are <em>modelled</em>, not measured. The separate Minikube validation is shown below.
   </section>
 
-  <section class="kpi-grid">
+  <section class="kpi-grid" aria-label="Confirmatory result summary">
     <div class="kpi"><span class="kpi-label">Paired runs</span><span class="kpi-value">{{ data.kpis.runs }}</span><span class="kpi-note">{{ data.kpis.workloads }} workloads × {{ data.kpis.strategies }} strategies</span></div>
     <div class="kpi"><span class="kpi-label">EAES / HPA energy per served</span><span class="kpi-value">{% if data.kpis.energy_ratio_vs_hpa is not none %}{{ "%.2f"|format(data.kpis.energy_ratio_vs_hpa) }}×{% else %}n/a{% endif %}</span><span class="kpi-note">mean across workloads; lower is better</span></div>
     <div class="kpi"><span class="kpi-label">EAES replica-hours / HPA</span><span class="kpi-value">{% if data.kpis.replica_ratio_vs_hpa is not none %}{{ "%.2f"|format(data.kpis.replica_ratio_vs_hpa) }}×{% else %}n/a{% endif %}</span><span class="kpi-note">provisioning cost</span></div>
@@ -25,28 +25,106 @@
     <div class="kpi"><span class="kpi-label">Static drop rate</span><span class="kpi-value">{% if data.kpis.static_drop_rate is not none %}{{ "%.1f"|format(data.kpis.static_drop_rate * 100) }}%{% else %}n/a{% endif %}</span><span class="kpi-note">low energy often means unmet demand</span></div>
   </section>
 
-  <section class="panel">
+  <section class="panel control-panel">
     <div class="panel-head">
       <div>
-        <h2>Primary metric by workload</h2>
-        <p>Hover/select a metric. Values are means over ten seeds; confidence intervals are in the table below.</p>
+        <h2>Explore a confirmatory run</h2>
+        <p>Every chart below is loaded from the backend. The seed selector uses one real run; <em>all seeds</em> is a tick-wise mean of ten runs, not extra independent samples.</p>
       </div>
-      <label class="select-label">Metric
-        <select id="metricSelect">
-          <option value="energy_per_served_request_j">Energy / served request (J)</option>
-          <option value="replica_hours">Replica-hours</option>
-          <option value="sla_violation_rate">SLA violation rate</option>
-          <option value="drop_rate">Drop rate</option>
+      <span class="badge">real run data</span>
+    </div>
+    <div class="control-bar">
+      <label class="select-label">Workload
+        <select id="filterWorkload">
+          {% for workload in data.choices.workloads %}
+          <option value="{{ workload }}" {% if loop.first %}selected{% endif %}>{{ workload }}</option>
+          {% endfor %}
         </select>
       </label>
+      <label class="select-label">Strategy
+        <select id="filterStrategy">
+          {% for strategy in data.choices.strategies %}
+          <option value="{{ strategy }}" {% if strategy == data.choices.default_strategy %}selected{% endif %}>{{ data.choices.strategy_labels[strategy] }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="select-label">Seed
+        <select id="filterSeed">
+          <option value="all" selected>All seeds (tick mean)</option>
+          {% for seed in data.choices.seeds %}
+          <option value="{{ seed }}">Seed {{ seed }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="control-status" id="selectionStatus">Loading selection…</div>
     </div>
-    <div class="chart-wrap"><canvas id="resultChart" height="120"></canvas></div>
-    <p class="chart-note">If the chart library is unavailable, the tables remain authoritative.</p>
+    <div class="mini-kpi-grid" id="selectionKpis">
+      <div class="mini-kpi"><span>Selected workload</span><strong id="selWorkload">—</strong></div>
+      <div class="mini-kpi"><span>Selected strategy</span><strong id="selStrategy">—</strong></div>
+      <div class="mini-kpi"><span>Final-tick offered rate</span><strong id="selCurrentRps">—</strong></div>
+      <div class="mini-kpi"><span>Final-tick CPU</span><strong id="selCpu">—</strong></div>
+      <div class="mini-kpi"><span>Final-tick replicas</span><strong id="selReplicas">—</strong></div>
+      <div class="mini-kpi"><span>Average replica count</span><strong id="selAvgReplicas">—</strong></div>
+      <div class="mini-kpi"><span>Estimated total energy</span><strong id="selTotalEnergy">—</strong></div>
+      <div class="mini-kpi"><span>Estimated energy / served</span><strong id="selEnergyServed">—</strong></div>
+      <div class="mini-kpi"><span>Estimated energy / offered</span><strong id="selEnergyOffered">—</strong></div>
+      <div class="mini-kpi"><span>Drop rate</span><strong id="selDrop">—</strong></div>
+      <div class="mini-kpi"><span>SLA violation</span><strong id="selSla">—</strong></div>
+      <div class="mini-kpi"><span>P95 latency</span><strong id="selP95">—</strong></div>
+      <div class="mini-kpi"><span>Replica-hours</span><strong id="selReplicaHours">—</strong></div>
+      <div class="mini-kpi"><span>Scaling events</span><strong id="selScaling">—</strong></div>
+    </div>
+    <p class="chart-note" id="selectionNote">Energy is modelled from node CPU and the configured power assumptions.</p>
+    <p class="chart-note"><strong>SLA definition:</strong> a request violates the SLA if it is dropped or its latency exceeds the configured 500 ms threshold. The run-level SLA violation rate is reported as a fraction of offered requests.</p>
+  </section>
+
+  <section class="chart-grid">
+    <div class="panel chart-card">
+      <div class="panel-head"><div><h2>Workload over time</h2><p>Offered requests per second and, where available, the controller forecast aligned to the observation two ticks ahead.</p></div></div>
+      <div class="chart-wrap"><canvas id="tsWorkloadChart" height="150"></canvas></div>
+    </div>
+    <div class="panel chart-card">
+      <div class="panel-head"><div><h2>CPU over time</h2><p>Controller-observed CPU utilisation across the 300 s run (30 s warm-up shaded in the data).</p></div></div>
+      <div class="chart-wrap"><canvas id="tsCpuChart" height="150"></canvas></div>
+    </div>
+    <div class="panel chart-card">
+      <div class="panel-head"><div><h2>Replicas over time</h2><p>Ready and desired replica counts. Pending replicas explain start-up lag.</p></div></div>
+      <div class="chart-wrap"><canvas id="tsReplicaChart" height="150"></canvas></div>
+    </div>
+  </section>
+
+  <section class="chart-grid">
+    <div class="panel chart-card">
+      <div class="panel-head">
+        <div>
+          <h2>Strategy comparison by workload</h2>
+          <p>Mean across ten seeds. Confidence intervals are in the table below.</p>
+        </div>
+        <label class="select-label">Metric
+          <select id="metricSelect">
+            <option value="energy_per_served_request_j">Estimated energy / served request (J)</option>
+            <option value="energy_per_offered_request_j">Estimated energy / offered request (J)</option>
+            <option value="replica_hours">Replica-hours</option>
+            <option value="sla_violation_rate">SLA violation rate</option>
+            <option value="drop_rate">Drop rate</option>
+            <option value="p95_latency_ms">P95 latency (ms)</option>
+            <option value="scaling_events">Scaling events</option>
+            <option value="oscillations">Oscillations</option>
+          </select>
+        </label>
+      </div>
+      <div class="chart-wrap"><canvas id="resultChart" height="150"></canvas></div>
+    </div>
+    <div class="panel chart-card">
+      <div class="panel-head"><div><h2>Estimated energy vs request drop</h2><p>All strategies per workload. Lower-left is better. The offered denominator prevents a low-volume strategy from looking efficient.</p></div></div>
+      <div class="chart-wrap"><canvas id="energyDropChart" height="150"></canvas></div>
+      <p class="chart-note">Ringed points mark the lower-left Pareto frontier in the static extension plots under <code>results/extension/energy_vs_drop/</code>.</p>
+    </div>
   </section>
 
   <section class="panel">
     <div class="panel-head">
-      <div><h2>Descriptive statistics: primary metrics</h2><p>Mean [95% bootstrap CI] and median from the generated <code>descriptive.csv</code>.</p></div>
+      <div><h2>Descriptive statistics: primary metrics</h2><p>Mean [95% bootstrap CI] and median from the generated <code>descriptive.csv</code>. Each row aggregates ten runs.</p></div>
       <a class="link-btn" href="/api/v1/research/tables/descriptive">JSON table</a>
     </div>
     <div class="table-scroll">
@@ -56,7 +134,7 @@
         {% for row in data.descriptive_primary %}
           <tr>
             <td>{{ row.workload }}</td>
-            <td><span class="tag">{{ row.strategy }}</span></td>
+            <td><span class="tag">{{ data.choices.strategy_labels.get(row.strategy, row.strategy) }}</span></td>
             <td>{{ row.metric }}</td>
             <td>{{ row.n }}</td>
             <td>{% if row.mean is not none %}{{ "%.4f"|format(row.mean) }} [{{ "%.4f"|format(row.ci_low) }}, {{ "%.4f"|format(row.ci_high) }}]{% else %}n/a{% endif %}</td>
@@ -81,7 +159,7 @@
           {% if row.baseline == 'hpa_formula' and row.strategy in ('eaes', 'forecasting_eaes') %}
           <tr>
             <td>{{ row.workload }}</td>
-            <td><span class="tag">{{ row.strategy }}</span></td>
+            <td><span class="tag">{{ data.choices.strategy_labels.get(row.strategy, row.strategy) }}</span></td>
             <td>{{ row.metric }}</td>
             <td>{% if row.mean_diff is not none %}{{ "%.4f"|format(row.mean_diff) }} [{{ "%.4f"|format(row.ci_low) }}, {{ "%.4f"|format(row.ci_high) }}]{% else %}n/a{% endif %}</td>
             <td>{{ "%.4f"|format(row.p_value) if row.p_value is not none else 'not testable' }}</td>
@@ -97,7 +175,7 @@
 
   <section class="panel">
     <div class="panel-head">
-      <div><h2>Separate real-cluster validation</h2><p>Real Minikube/HPA observations. Energy here is modelled from measured node CPU, not measured power.</p></div>
+      <div><h2>Separate real-cluster validation</h2><p>Real Minikube/HPA observations. Energy here is modelled from measured node CPU, not measured power. This is not part of the paired simulation.</p></div>
       <a class="link-btn" href="/api/v1/research/cluster">JSON</a>
     </div>
     {% if data.cluster.available %}
@@ -117,10 +195,21 @@
         </tbody>
       </table>
     </div>
-    <p class="small">Cluster: {{ data.cluster.manifest.namespace if data.cluster.manifest else 'n/a' }} / {{ data.cluster.manifest.deployment if data.cluster.manifest else 'n/a' }} · {{ data.cluster.manifest.target_rate_rps if data.cluster.manifest else 'n/a' }} req/s · {{ data.cluster.manifest.duration_s if data.cluster.manifest else 'n/a' }} s per repetition.</p>
+    <p class="small">Cluster: {{ data.cluster.manifest.namespace if data.cluster.manifest else 'n/a' }} / {{ data.cluster.manifest.deployment if data.cluster.manifest else 'n/a' }} · {{ data.cluster.manifest.target_rate_rps if data.cluster.manifest else 'n/a' }} req/s · {{ data.cluster.manifest.duration_s if data.cluster.manifest else 'n/a' }} s per repetition. Only three repetitions per mode are available; treat these as a smoke validation, not a powered cluster study.</p>
     {% else %}
       <p>No cluster validation artifacts found.</p>
     {% endif %}
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><h2>Extension evidence</h2><p>Additional experiments are exploratory and are kept separate from the confirmatory tables.</p></div></div>
+    <div class="link-grid">
+      <a href="/api/v1/research/tables/forecasting" class="link-card"><strong>Forecast accuracy</strong><span>Held-out Holt/EWMA MAE and MAPE with excluded-zero counts.</span></a>
+      <a href="/api/v1/research/tables/paired_headline" class="link-card"><strong>All paired comparisons</strong><span>Every strategy, every metric, median paired differences.</span></a>
+      <a href="/api/v1/research/tables/headline" class="link-card"><strong>Headline table</strong><span>Mean, median, 95% bootstrap intervals, and missing counts.</span></a>
+      <a href="/api/v1/research/cluster" class="link-card"><strong>Cluster validation</strong><span>Static and native-HPA observations with modelled energy.</span></a>
+    </div>
+    <p class="small">Oracle, startup-delay sweep, 30-seed extension, energy sensitivity, Pareto SVGs, and HPA replay are documented in <code>docs/EXTENSIONS.md</code> and stored under <code>results/extension/</code>.</p>
   </section>
 
   <section class="panel">

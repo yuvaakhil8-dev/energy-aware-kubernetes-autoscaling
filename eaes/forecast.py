@@ -68,26 +68,49 @@ def evaluate_forecast(
     cfg: Dict[str, Any] | None = None,
     horizon_steps: int = 1,
     eval_fraction: float = 0.5,
+    mape_min_actual: float = 1e-9,
 ) -> Dict[str, float | int | None]:
     """Online forecast evaluation on the held-out final portion of a trace.
 
     The model is updated sequentially over the whole trace; errors are counted
     only when the target lies in the final ``eval_fraction`` segment.  This is a
     held-out segment evaluation, not a retrained/rolling-origin experiment.
+
+    MAPE is undefined when the actual rate is zero.  Those targets are excluded
+    and counted explicitly through ``mape_excluded``.  A caller can raise
+    ``mape_min_actual`` to exclude near-zero rates as well.
     """
+    empty = {
+        "mae": None,
+        "mape_pct": None,
+        "n": 0,
+        "mape_n": 0,
+        "mape_excluded": 0,
+        "zero_actuals": 0,
+        "method": method,
+        "horizon_steps": int(horizon_steps),
+        "mape_min_actual": float(mape_min_actual),
+    }
     if not rates:
-        return {"mae": None, "mape_pct": None, "n": 0, "method": method}
+        return empty
     split = int(len(rates) * (1.0 - float(eval_fraction)))
     split = max(0, min(split, len(rates) - 1))
     model = make_forecaster(method, cfg)
     abs_errors: List[float] = []
     pct_errors: List[float] = []
+    zero_actuals = 0
+    excluded = 0
     for i, actual in enumerate(rates):
         if i >= split and i + horizon_steps < len(rates):
             pred = model.predict(horizon_steps)
             target = rates[i + horizon_steps]
             abs_errors.append(abs(pred - target))
-            if target > 0:
+            if target <= 0:
+                zero_actuals += 1
+                excluded += 1
+            elif target < float(mape_min_actual):
+                excluded += 1
+            else:
                 pct_errors.append(abs(pred - target) / target * 100.0)
         model.update(actual)
     mae = sum(abs_errors) / len(abs_errors) if abs_errors else None
@@ -96,6 +119,10 @@ def evaluate_forecast(
         "mae": mae,
         "mape_pct": mape,
         "n": len(abs_errors),
+        "mape_n": len(pct_errors),
+        "mape_excluded": excluded,
+        "zero_actuals": zero_actuals,
         "method": method,
         "horizon_steps": int(horizon_steps),
+        "mape_min_actual": float(mape_min_actual),
     }
