@@ -2,7 +2,7 @@
 
 Run: `v3_paired_20261025T220942Z`  
 Run git commit: `431810fd8daa3cfd7dceaf11acb18dd6b14ea0ea`  
-Analysis commit: `4953d1cca68e25ac8d3214890aab5953c17ff582`  
+Analysis commit: `b11325e96b13ed5d92bfbcf8125e92696f3dc0a3`  
 Execution mode: **simulation**  
 
 > All energy is modelled, not measured. The diagnostic looks for evidence that could favour or harm EAES and does not adjust any result.

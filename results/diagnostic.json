@@ -1,5 +1,5 @@
 {
-  "analysis_git_commit": "4953d1cca68e25ac8d3214890aab5953c17ff582",
+  "analysis_git_commit": "b11325e96b13ed5d92bfbcf8125e92696f3dc0a3",
   "comparisons": [
     {
       "e_drop": 0.0,
@@ -205,7 +205,7 @@
       "workload": "bursty"
     }
   ],
-  "generated_at": "2026-10-26T06:21:03.511231+00:00",
+  "generated_at": "2026-10-27T04:16:01.401280+00:00",
   "metric_rows": [
     {
       "cooldown_holds": 0,
