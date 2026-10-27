@@ -111,7 +111,8 @@ The earlier run `v3_paired_20261025T212043Z` was superseded by `v3_paired_202610
 ## 9. Exact commands
 
 ```powershell
-cd "C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes"
+# Change to the repository root (run this from a PowerShell prompt while inside the repo)
+Set-Location (git rev-parse --show-toplevel)
 python -m experiments.run_v3
 python -m analysis.analyze
 python -m analysis.diagnose

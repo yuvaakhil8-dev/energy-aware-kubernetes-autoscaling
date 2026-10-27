@@ -102,7 +102,9 @@ This means the dashboard is not fully offline-capable for charts, but it is full
 ## 8. Running locally
 
 ```powershell
-cd "C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes"
+# Change to the repository root (run this from a PowerShell prompt while inside the repo)
+Set-Location (git rev-parse --show-toplevel)
+# On Linux/macOS you can use: cd "$(git rev-parse --show-toplevel)"
 $env:ENERGY_AWARE_NO_BG='1'
 python app.py
 ```

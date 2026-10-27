@@ -17,7 +17,8 @@ Kubernetes.
 Install:
 
 ```powershell
-cd "C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes"
+# Change to the repository root (run this from a PowerShell prompt while inside the repo)
+Set-Location (git rev-parse --show-toplevel)
 python -m pip install -r requirements.txt
 ```
 

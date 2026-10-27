@@ -65,10 +65,11 @@ The original files are not inputs to `experiments/run_v3.py`, `analysis/analyze.
 ## 6. Integrity checks
 
 ```powershell
-$parent = 'C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project'
-$root = Join-Path $parent 'flask-kubernetes'
-Get-FileHash "$parent\experiment_results_v2.json", "$parent\experiment_results.json" -Algorithm SHA256
+# Run from the repository root (replace `…/flask-kubernetes` with your actual repo path)
+$root = Resolve-Path .
 Get-FileHash "$root\data\experiment_results_v2.json", "$root\data\experiment_results.json" -Algorithm SHA256
+# Also verify the originals one level above (if present)
+# Get-FileHash "..\experiment_results_v2.json", "..\experiment_results.json" -Algorithm SHA256
 $env:ENERGY_AWARE_NO_BG='1'
 python -m pytest -q
 ```

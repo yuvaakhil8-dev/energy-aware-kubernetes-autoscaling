@@ -6,12 +6,12 @@ import urllib.request
 import subprocess
 import time
 
-PROJECT_ROOT = r'C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project'
+PROJECT_ROOT = Path(__file__).resolve().parent
 
 # Start Flask app in background
 proc = subprocess.Popen(
     [sys.executable, 'app.py'],
-    cwd=PROJECT_ROOT + r'\flask-kubernetes',
+    cwd=PROJECT_ROOT,
     stdout=subprocess.PIPE, stderr=subprocess.PIPE
 )
 time.sleep(3)
@@ -52,7 +52,7 @@ try:
 
     print()
     print('=== EXPERIMENT DATA ===')
-    with open(PROJECT_ROOT + r'\experiment_results.json', 'r') as f:
+    with open(PROJECT_ROOT / 'experiment_results.json', 'r') as f:
         data = json.load(f)
     print(f'Total experiments: {len(data)}')
     modes = set(r.get('mode') for r in data)

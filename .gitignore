@@ -6,3 +6,5 @@ venv/
 archive/
 *.log
 results/cluster_validation/portforward.*
+app.py.backup
+app.py.pre_stabilization_backup

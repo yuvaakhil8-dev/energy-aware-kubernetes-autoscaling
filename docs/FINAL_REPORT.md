@@ -641,7 +641,8 @@ Full lists: `docs/THREATS_TO_VALIDITY.md`, `docs/LIMITATIONS.md`, `docs/FAILURE_
 ### 19.1 Exact commands
 
 ```powershell
-cd "C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes"
+# Change to the repository root (run this from a PowerShell prompt while inside the repo)
+Set-Location (git rev-parse --show-toplevel)
 python -m pip install -r requirements.txt
 python -m experiments.run_v3
 python -m analysis.analyze
@@ -654,6 +655,8 @@ python -m pytest -q
 Optional cluster validation:
 
 ```powershell
+# Change to the repository root (run this from a PowerShell prompt while inside the repo)
+Set-Location (git rev-parse --show-toplevel)
 minikube start --driver=docker --cpus=2 --memory=4096
 minikube addons enable metrics-server
 minikube image build -t flask-k8s-demo:latest .

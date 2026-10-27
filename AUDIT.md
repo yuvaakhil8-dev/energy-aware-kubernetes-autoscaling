@@ -1,7 +1,7 @@
 # AUDIT — Original Project Condition (Pre-Rebuild)
 
 **Date:** 2026-10-26
-**Project:** `C:\Users\yuvaa\OneDrive\Desktop\Documents\Default Project\flask-kubernetes`
+**Project:** `flask-kubernetes`
 **Branch:** `research-rebuild` (baseline commit `c5ec94d` on `pre-rebuild-snapshot`)
 **Scope:** read-only audit of the application, controller, experiments, datasets, tests, and manifests.
 
